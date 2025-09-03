@@ -193,12 +193,12 @@ export function OnboardingPage() {
                       
                       {/* Progresso */}
                       {client.currentStage && (
-                        <div className="mb-3">
-                          <div className="flex justify-between text-sm text-muted-foreground mb-1">
+                        <div className="mb-4 pr-8">
+                          <div className="flex justify-between text-xs text-muted-foreground mb-2">
                             <span>Progresso do Onboarding</span>
                             <span>{Math.round(getStageProgress(client.currentStage.stage, client.currentStage.status))}%</span>
                           </div>
-                          <Progress value={getStageProgress(client.currentStage.stage, client.currentStage.status)} className="h-2" />
+                          <Progress value={getStageProgress(client.currentStage.stage, client.currentStage.status)} className="h-1.5 w-full max-w-sm" />
                         </div>
                       )}
                       
