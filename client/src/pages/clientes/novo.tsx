@@ -4,7 +4,7 @@ import { useLocation } from 'wouter'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { ArrowLeft, Building, Users, Plus, X } from 'lucide-react'
+import { ArrowLeft, Building, Users, Plus, X, Search, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,9 +22,45 @@ const contatoSchema = z.object({
   cargo: z.string().optional(),
 })
 
+// Validação de CNPJ
+function validarCNPJ(cnpj: string): boolean {
+  cnpj = cnpj.replace(/[^\d]+/g, '')
+  if (cnpj.length !== 14) return false
+  if (/^(\d)\1{13}$/.test(cnpj)) return false
+  
+  let soma = 0
+  let peso = 2
+  for (let i = 11; i >= 0; i--) {
+    soma += parseInt(cnpj.charAt(i)) * peso
+    peso = peso === 9 ? 2 : peso + 1
+  }
+  let digito1 = soma % 11 < 2 ? 0 : 11 - (soma % 11)
+  
+  soma = 0
+  peso = 2
+  for (let i = 12; i >= 0; i--) {
+    soma += parseInt(cnpj.charAt(i)) * peso
+    peso = peso === 9 ? 2 : peso + 1
+  }
+  let digito2 = soma % 11 < 2 ? 0 : 11 - (soma % 11)
+  
+  return digito1 === parseInt(cnpj.charAt(12)) && digito2 === parseInt(cnpj.charAt(13))
+}
+
+// Máscara para CNPJ
+function formatarCNPJ(value: string): string {
+  const cnpj = value.replace(/\D/g, '')
+  return cnpj
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2')
+    .replace(/(-\d{2})\d+?$/, '$1')
+}
+
 const clienteSchema = z.object({
   nome: z.string().min(1, 'Nome da empresa é obrigatório'),
-  cnpj: z.string().min(14, 'CNPJ deve ter pelo menos 14 caracteres'),
+  cnpj: z.string().min(1, 'CNPJ é obrigatório').refine(validarCNPJ, 'CNPJ inválido'),
   data_inicio_contrato: z.string().optional(),
   contatos_empresa: z.array(contatoSchema).default([]),
   canais: z.array(z.string()).default([]),
@@ -57,6 +93,10 @@ export function NovoClientePage() {
     telefone: '',
     cargo: '',
   })
+  
+  // Estados para busca CNPJ
+  const [buscandoCNPJ, setBuscandoCNPJ] = useState(false)
+  const [cnpjEncontrado, setCnpjEncontrado] = useState(false)
 
   const form = useForm<ClienteFormData>({
     resolver: zodResolver(clienteSchema),
@@ -118,6 +158,73 @@ export function NovoClientePage() {
     )
   }
 
+  // Função para buscar dados via API da Receita Federal
+  const buscarDadosCNPJ = async (cnpj: string) => {
+    const cnpjLimpo = cnpj.replace(/\D/g, '')
+    if (cnpjLimpo.length !== 14 || !validarCNPJ(cnpjLimpo)) {
+      return
+    }
+
+    setBuscandoCNPJ(true)
+    setCnpjEncontrado(false)
+    
+    try {
+      const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`)
+      const data = await response.json()
+      
+      if (data.status === 'ERROR') {
+        toast({
+          title: 'CNPJ não encontrado',
+          description: 'Não foi possível encontrar informações para este CNPJ.',
+          variant: 'destructive',
+        })
+        return
+      }
+      
+      // Auto-preencher campos do formulário
+      form.setValue('nome', data.nome || '')
+      setCnpjEncontrado(true)
+      
+      // Se houver informações de contato, adicionar automaticamente
+      if (data.email || data.telefone) {
+        const novoContatoEmpresa = {
+          nome: data.nome || 'Contato Principal',
+          email: data.email || '',
+          telefone: data.telefone || '',
+          cargo: 'Responsável',
+        }
+        setContatos(prev => [novoContatoEmpresa, ...prev])
+      }
+      
+      toast({
+        title: 'CNPJ encontrado!',
+        description: `Dados da empresa ${data.nome} carregados com sucesso.`,
+      })
+      
+    } catch (error) {
+      toast({
+        title: 'Erro ao buscar CNPJ',
+        description: 'Não foi possível consultar a Receita Federal. Tente novamente.',
+        variant: 'destructive',
+      })
+    } finally {
+      setBuscandoCNPJ(false)
+    }
+  }
+
+  // Manipular mudança do CNPJ
+  const handleCNPJChange = (value: string) => {
+    const cnpjFormatado = formatarCNPJ(value)
+    form.setValue('cnpj', cnpjFormatado)
+    setCnpjEncontrado(false)
+    
+    // Buscar automaticamente quando CNPJ estiver completo
+    const cnpjLimpo = value.replace(/\D/g, '')
+    if (cnpjLimpo.length === 14 && validarCNPJ(cnpjLimpo)) {
+      buscarDadosCNPJ(cnpjFormatado)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -143,35 +250,56 @@ export function NovoClientePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="nome"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nome da Empresa *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ex: Empresa ABC Ltda" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="cnpj"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CNPJ *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="00.000.000/0000-00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {/* Campo CNPJ primeiro com busca automática */}
+              <FormField
+                control={form.control}
+                name="cnpj"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CNPJ * - Digite para buscar dados automaticamente</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          placeholder="00.000.000/0000-00" 
+                          value={field.value}
+                          onChange={(e) => handleCNPJChange(e.target.value)}
+                          className="pr-10"
+                          data-testid="input-cnpj"
+                        />
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          {buscandoCNPJ ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          ) : cnpjEncontrado ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Search className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {/* Nome da empresa */}
+              <FormField
+                control={form.control}
+                name="nome"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome da Empresa *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="Ex: Empresa ABC Ltda" 
+                        {...field}
+                        data-testid="input-nome-empresa"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
