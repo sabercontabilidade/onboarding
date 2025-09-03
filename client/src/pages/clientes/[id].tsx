@@ -102,6 +102,14 @@ export function ClienteDetalhePage() {
         priority: 'high' as const
       },
       {
+        id: 'd5',
+        title: 'D+5: Verificação de Integração',
+        description: 'Verificar se a integração dos sistemas está funcionando corretamente',
+        targetDate: createdDate.add(5, 'day'),
+        isOverdue: today.isAfter(createdDate.add(5, 'day')),
+        priority: 'high' as const
+      },
+      {
         id: 'd15',
         title: 'D+15: Reforçar Presença',
         description: 'Garantir bom atendimento e reforçar presença da empresa',
