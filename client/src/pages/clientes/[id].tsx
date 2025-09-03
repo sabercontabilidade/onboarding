@@ -230,13 +230,13 @@ export function ClienteDetalhePage() {
   }
 
   const getPriorityColor = (priority: string, isOverdue: boolean, isCompleted: boolean) => {
-    if (isCompleted) return 'bg-green-100 text-green-700 border-green-200'
-    if (isOverdue) return 'bg-red-100 text-red-700 border-red-200'
+    if (isCompleted) return 'bg-orange-50 text-orange-700 border-orange-300'
+    if (isOverdue) return 'bg-red-100 text-red-700 border-red-300'
     
     const colors = {
-      'high': 'bg-orange-100 text-orange-700 border-orange-200',
-      'medium': 'bg-blue-100 text-blue-700 border-blue-200',
-      'low': 'bg-gray-100 text-gray-700 border-gray-200'
+      'high': 'bg-orange-100 text-orange-800 border-orange-300',
+      'medium': 'bg-gray-100 text-gray-700 border-gray-300',
+      'low': 'bg-gray-50 text-gray-600 border-gray-200'
     }
     return colors[priority as keyof typeof colors] || colors.low
   }
@@ -335,21 +335,21 @@ export function ClienteDetalhePage() {
                       <div className="flex-shrink-0">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                           stage.isCompleted 
-                            ? 'bg-green-100 border-green-200'
+                            ? 'bg-orange-100 border-orange-300'
                             : stage.isOverdue 
-                              ? 'bg-red-100 border-red-200' 
+                              ? 'bg-red-100 border-red-300' 
                               : stage.priority === 'high' 
-                                ? 'bg-orange-100 border-orange-200'
-                                : 'bg-blue-100 border-blue-200'
+                                ? 'bg-orange-50 border-orange-200'
+                                : 'bg-gray-100 border-gray-300'
                         } border-2`}>
                           {stage.isCompleted ? (
-                            <CheckCircle2 className="h-6 w-6 text-green-600" />
+                            <CheckCircle2 className="h-6 w-6 text-orange-600" />
                           ) : stage.isOverdue ? (
                             <AlertCircle className="h-6 w-6 text-red-600" />
                           ) : stage.priority === 'high' ? (
-                            <Star className="h-6 w-6 text-orange-600" />
+                            <Star className="h-6 w-6 text-orange-500" />
                           ) : (
-                            <Calendar className="h-6 w-6 text-blue-600" />
+                            <Calendar className="h-6 w-6 text-gray-600" />
                           )}
                         </div>
                       </div>
@@ -358,7 +358,7 @@ export function ClienteDetalhePage() {
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-lg font-semibold">{stage.title}</h3>
                           {stage.isCompleted ? (
-                            <Badge variant="default" className="text-xs bg-green-100 text-green-700">
+                            <Badge variant="default" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
                               Concluído
                             </Badge>
                           ) : stage.isOverdue ? (
@@ -366,7 +366,7 @@ export function ClienteDetalhePage() {
                               Atrasado
                             </Badge>
                           ) : !stage.isOverdue && dayjs().isAfter(stage.targetDate.subtract(7, 'day')) ? (
-                            <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-700">
+                            <Badge variant="secondary" className="text-xs bg-orange-50 text-orange-600 border-orange-200">
                               Próximo
                             </Badge>
                           ) : null}
@@ -484,11 +484,11 @@ export function ClienteDetalhePage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                  <div className="text-2xl font-bold text-green-600">
+                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="text-2xl font-bold text-orange-600">
                     {getFollowUpStages().filter(s => s.isCompleted).length}
                   </div>
-                  <div className="text-sm text-green-600 font-medium">Concluídas</div>
+                  <div className="text-sm text-orange-600 font-medium">Concluídas</div>
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
                   <div className="text-2xl font-bold text-red-600">
@@ -496,11 +496,11 @@ export function ClienteDetalhePage() {
                   </div>
                   <div className="text-sm text-red-600 font-medium">Atrasadas</div>
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="text-2xl font-bold text-gray-600">
                     {getFollowUpStages().filter(s => !s.isCompleted && !s.isOverdue).length}
                   </div>
-                  <div className="text-sm text-blue-600 font-medium">Pendentes</div>
+                  <div className="text-sm text-gray-600 font-medium">Pendentes</div>
                 </div>
               </div>
             </CardContent>
@@ -519,7 +519,7 @@ export function ClienteDetalhePage() {
                   {appointments.map((appointment: any) => (
                     <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-4">
-                        <Calendar className="h-5 w-5 text-blue-500" />
+                        <Calendar className="h-5 w-5 text-orange-500" />
                         <div>
                           <p className="font-medium">{appointment.title}</p>
                           <p className="text-sm text-muted-foreground">
@@ -569,7 +569,7 @@ export function ClienteDetalhePage() {
                         </div>
                         {visita.satisfacao && (
                           <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
                             <span className="font-medium">{visita.satisfacao}/10</span>
                           </div>
                         )}
