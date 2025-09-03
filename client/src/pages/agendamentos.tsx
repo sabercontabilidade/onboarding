@@ -21,14 +21,17 @@ import dayjs from '@/lib/dayjs'
 
 export function AgendamentosPage() {
   const [filters, setFilters] = useState({
-    status: '',
-    type: '',
+    status: 'all',
+    type: 'all',
   })
   const [searchTerm, setSearchTerm] = useState('')
 
   const { data: appointments, isLoading } = useQuery({
     queryKey: ['/api/agendamentos', filters],
-    queryFn: () => api.appointments.list(filters),
+    queryFn: () => api.appointments.list({
+      status: filters.status === 'all' ? '' : filters.status,
+      type: filters.type === 'all' ? '' : filters.type,
+    }),
   })
 
   const getStatusIcon = (status: string) => {
@@ -95,7 +98,7 @@ export function AgendamentosPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="AGENDADO">Agendado</SelectItem>
                 <SelectItem value="REALIZADO">Realizado</SelectItem>
                 <SelectItem value="CANCELADO">Cancelado</SelectItem>
@@ -106,7 +109,7 @@ export function AgendamentosPage() {
                 <SelectValue placeholder="Tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="REUNIAO">Reunião</SelectItem>
                 <SelectItem value="LIGACAO">Ligação</SelectItem>
                 <SelectItem value="VISITA">Visita</SelectItem>
@@ -211,7 +214,7 @@ export function AgendamentosPage() {
             <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Nenhum agendamento encontrado</h3>
             <p className="text-muted-foreground text-center mb-4">
-              {searchTerm || filters.status || filters.type
+              {searchTerm || (filters.status !== 'all') || (filters.type !== 'all')
                 ? 'Tente ajustar sua pesquisa ou remover os filtros.'
                 : 'Comece criando seu primeiro agendamento.'
               }

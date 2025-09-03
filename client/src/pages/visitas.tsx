@@ -21,7 +21,7 @@ import dayjs from '@/lib/dayjs'
 
 export function VisitasPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
 
   // Mock data para visitas - em uma aplicação real, isso viria da API
   const mockVisitas = [
@@ -66,7 +66,7 @@ export function VisitasPage() {
         !visita.tipo_visita.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false
     }
-    if (typeFilter && visita.tipo_visita !== typeFilter) {
+    if (typeFilter && typeFilter !== 'all' && visita.tipo_visita !== typeFilter) {
       return false
     }
     return true
@@ -116,7 +116,7 @@ export function VisitasPage() {
                 <SelectValue placeholder="Tipo de visita" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="Implementação">Implementação</SelectItem>
                 <SelectItem value="Follow-up">Follow-up</SelectItem>
                 <SelectItem value="Treinamento">Treinamento</SelectItem>
@@ -219,7 +219,7 @@ export function VisitasPage() {
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium mb-2">Nenhuma visita encontrada</h3>
             <p className="text-muted-foreground text-center mb-4">
-              {searchTerm || typeFilter
+              {searchTerm || (typeFilter !== 'all')
                 ? 'Tente ajustar sua pesquisa ou remover os filtros.'
                 : 'Comece registrando sua primeira ATA de visita.'
               }
