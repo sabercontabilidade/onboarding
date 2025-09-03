@@ -214,7 +214,7 @@ export function OnboardingPage() {
                           <span>Progresso do Follow-up</span>
                           <span className="ml-2">{Math.round(getFollowUpProgress(client))}%</span>
                         </div>
-                        <Progress value={getFollowUpProgress(client)} className="h-1.5 w-full max-w-sm" />
+                        <Progress value={getFollowUpProgress(client)} className="h-1.5 w-full max-w-md" />
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
