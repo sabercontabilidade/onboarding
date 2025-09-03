@@ -304,7 +304,7 @@ export function VisitasPage() {
                     </div>
                   </div>
                   
-                  <Link href={`/clientes/${client.id}`}>
+                  <Link href={`/clientes/${client.id}/visitas`}>
                     <Button variant="outline" size="sm">
                       <Eye className="h-4 w-4" />
                     </Button>

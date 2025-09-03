@@ -1,0 +1,356 @@
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useParams, Link } from 'wouter'
+import { 
+  FileText, 
+  Plus, 
+  ArrowLeft, 
+  Calendar, 
+  Users, 
+  Star,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
+import { api } from '@/lib/api'
+import dayjs from '@/lib/dayjs'
+
+export function ClienteVisitasPage() {
+  const params = useParams()
+  const clientId = params.id
+  const [showNewVisitModal, setShowNewVisitModal] = useState(false)
+  const [formData, setFormData] = useState({
+    data: '',
+    participantes: '',
+    descricao: ''
+  })
+  const { toast } = useToast()
+
+  // Buscar dados do cliente
+  const { data: client, isLoading: isLoadingClient } = useQuery({
+    queryKey: [`/api/clients/${clientId}`],
+    queryFn: () => api.clients.get(clientId!),
+    enabled: !!clientId,
+  })
+
+  // Mock data para visitas - em uma aplicação real, isso viria da API
+  const mockVisitas = [
+    {
+      id: 1,
+      clienteId: clientId,
+      data: '2024-01-15',
+      participantes: 'João Silva, Maria Santos',
+      descricao: 'Reunião para implementação do novo sistema contábil. Foram discutidos os requisitos técnicos e definido cronograma de implantação. Cliente demonstrou interesse em módulos adicionais.',
+      status: 'concluida',
+      satisfacao: 9,
+      decisoes: [
+        'Aprovado cronograma de 3 meses para implementação',
+        'Definido treinamento da equipe para março'
+      ],
+      pendencias: [
+        'Enviar documentação técnica',
+        'Agendar próxima reunião'
+      ]
+    },
+    {
+      id: 2,
+      clienteId: clientId,
+      data: '2024-01-25',
+      participantes: 'Ana Costa, Pedro Lima',
+      descricao: 'Follow-up da implementação. Verificação do progresso de migração de dados e ajustes necessários nos relatórios personalizados.',
+      status: 'concluida', 
+      satisfacao: 8,
+      decisoes: [
+        'Migração 80% concluída',
+        'Ajustes nos relatórios personalizados aprovados'
+      ],
+      pendencias: [
+        'Finalizar migração até fim do mês',
+        'Validar relatórios com equipe cliente'
+      ]
+    }
+  ]
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.data || !formData.participantes || !formData.descricao) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Aqui seria feita a chamada para API para salvar a visita
+    console.log('Nova visita:', { clientId, ...formData })
+    
+    toast({
+      title: "Visita registrada",
+      description: "A nova visita foi registrada com sucesso.",
+    })
+    
+    // Limpar formulário e fechar modal
+    setFormData({ data: '', participantes: '', descricao: '' })
+    setShowNewVisitModal(false)
+  }
+
+  const getStarRating = (rating: number) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`h-4 w-4 ${
+          i < rating ? 'fill-orange-400 text-orange-400' : 'text-gray-300'
+        }`}
+      />
+    ))
+  }
+
+  if (isLoadingClient) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div className="grid gap-4">
+          {[...Array(2)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="space-y-2">
+                  <div className="h-5 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/visitas">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Visitas - {client?.companyName}
+            </h1>
+            <p className="text-muted-foreground">
+              Histórico de visitas e ATAs registradas
+            </p>
+          </div>
+        </div>
+        <Button onClick={() => setShowNewVisitModal(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Nova Visita
+        </Button>
+      </div>
+
+      {/* Informações do Cliente */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+              <FileText className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">{client?.companyName}</h3>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>CNPJ: {client?.cnpj}</span>
+                {client?.contactName && <span>Contato: {client?.contactName}</span>}
+                <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                  {client?.status === 'active' ? 'Ativo' : client?.status === 'onboarding' ? 'Onboarding' : client?.status}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Lista de Visitas */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Histórico de Visitas ({mockVisitas.length})</h2>
+        
+        {mockVisitas.length > 0 ? (
+          <div className="grid gap-6">
+            {mockVisitas.map((visita: any) => (
+              <Card key={visita.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Calendar className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">
+                          Visita - {dayjs(visita.data).format('DD/MM/YYYY')}
+                        </CardTitle>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="bg-green-50 text-green-600">
+                            Concluída
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {dayjs(visita.data).format('dddd, DD [de] MMMM [de] YYYY')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {getStarRating(visita.satisfacao)}
+                      </div>
+                      <span className="font-medium">{visita.satisfacao}/10</span>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  {/* Participantes */}
+                  <div className="flex items-start gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium">Participantes</p>
+                      <p className="text-sm text-muted-foreground">{visita.participantes}</p>
+                    </div>
+                  </div>
+
+                  {/* Descrição */}
+                  <div>
+                    <p className="text-sm font-medium mb-1">Descrição da Visita</p>
+                    <p className="text-sm text-muted-foreground">{visita.descricao}</p>
+                  </div>
+
+                  {/* Decisões */}
+                  {visita.decisoes && visita.decisoes.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        Decisões Tomadas
+                      </p>
+                      <ul className="space-y-1">
+                        {visita.decisoes.map((decisao: string, index: number) => (
+                          <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0"></span>
+                            {decisao}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Pendências */}
+                  {visita.pendencias && visita.pendencias.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-orange-500" />
+                        Ações Pendentes
+                      </p>
+                      <ul className="space-y-1">
+                        {visita.pendencias.map((pendencia: string, index: number) => (
+                          <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0"></span>
+                            {pendencia}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium mb-2">Nenhuma visita registrada</h3>
+              <p className="text-muted-foreground text-center mb-4">
+                Registre a primeira visita técnica para este cliente.
+              </p>
+              <Button onClick={() => setShowNewVisitModal(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Registrar Primeira Visita
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Modal Nova Visita */}
+      <Dialog open={showNewVisitModal} onOpenChange={setShowNewVisitModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Visita Técnica</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="data">Data da Visita *</Label>
+                <Input
+                  id="data"
+                  type="date"
+                  value={formData.data}
+                  onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="participantes">Participantes *</Label>
+                <Input
+                  id="participantes"
+                  placeholder="Ex: João Silva, Maria Santos"
+                  value={formData.participantes}
+                  onChange={(e) => setFormData(prev => ({ ...prev, participantes: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="descricao">Descrição da Visita *</Label>
+              <Textarea
+                id="descricao"
+                placeholder="Descreva tudo que foi tratado durante a visita..."
+                value={formData.descricao}
+                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                rows={6}
+                required
+              />
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowNewVisitModal(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">
+                Registrar Visita
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
