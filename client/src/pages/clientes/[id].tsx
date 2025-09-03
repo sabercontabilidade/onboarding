@@ -27,8 +27,11 @@ export function ClienteDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const clientId = id || ''
   
-  // Estado para controlar etapas concluídas
-  const [completedStages, setCompletedStages] = useState<string[]>([])
+  // Estado para controlar etapas concluídas (sincronizado com localStorage)
+  const [completedStages, setCompletedStages] = useState<string[]>(() => {
+    const savedStages = localStorage.getItem(`completedStages_${clientId}`)
+    return savedStages ? JSON.parse(savedStages) : []
+  })
   
   const { data: client, isLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
@@ -47,11 +50,16 @@ export function ClienteDetalhePage() {
   
   // Função para marcar/desmarcar etapa como concluída
   const toggleStageCompletion = (stageId: string) => {
-    setCompletedStages(prev => 
-      prev.includes(stageId) 
-        ? prev.filter(id => id !== stageId)
-        : [...prev, stageId]
-    )
+    const newCompletedStages = completedStages.includes(stageId) 
+      ? completedStages.filter(id => id !== stageId)
+      : [...completedStages, stageId]
+    
+    setCompletedStages(newCompletedStages)
+    // Persistir no localStorage para sincronizar com página de onboarding
+    localStorage.setItem(`completedStages_${clientId}`, JSON.stringify(newCompletedStages))
+    
+    // Disparar evento personalizado para atualizar outras páginas
+    window.dispatchEvent(new CustomEvent('localStorageChange'))
   }
 
   if (isLoading) {

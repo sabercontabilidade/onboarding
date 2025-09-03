@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'wouter'
 import { 
@@ -20,24 +20,41 @@ import { api } from '@/lib/api'
 import dayjs from '@/lib/dayjs'
 
 export function OnboardingPage() {
+  const [refreshKey, setRefreshKey] = useState(0)
+  
   const { data: clients, isLoading } = useQuery({
-    queryKey: ['/api/clients'],
+    queryKey: ['/api/clients', refreshKey],
     queryFn: () => api.clients.list(),
   })
 
   const onboardingClients = clients?.filter(client => client.status === 'onboarding') || []
-
-  const getStageProgress = (stage: string, status: string) => {
-    const stages = ['initial_meeting', 'documentation', 'review', 'completed']
-    const currentIndex = stages.indexOf(stage)
-    
-    // Se a etapa atual não está concluída, o progresso é baseado apenas nas etapas anteriores
-    if (status !== 'completed') {
-      return (currentIndex / stages.length) * 100
+  
+  // Detectar mudanças no localStorage para atualizar progresso
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setRefreshKey(prev => prev + 1)
     }
     
-    // Se a etapa atual está concluída, inclui ela no cálculo
-    return ((currentIndex + 1) / stages.length) * 100
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Também escutar mudanças personalizadas no localStorage
+    window.addEventListener('localStorageChange', handleStorageChange)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('localStorageChange', handleStorageChange)
+    }
+  }, [])
+
+  const getFollowUpProgress = (client: any) => {
+    // Buscar etapas concluídas do localStorage
+    const followUpStages = ['inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
+    const completedStagesKey = `completedStages_${client.id}`
+    const completedStagesStr = localStorage.getItem(completedStagesKey) || '[]'
+    const completedStages = JSON.parse(completedStagesStr)
+    const completedStagesCount = completedStages.length
+    
+    return (completedStagesCount / followUpStages.length) * 100
   }
 
   const getStageLabel = (stage: string) => {
@@ -192,15 +209,13 @@ export function OnboardingPage() {
                       </div>
                       
                       {/* Progresso */}
-                      {client.currentStage && (
-                        <div className="mb-4 pr-8">
-                          <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                            <span>Progresso do Onboarding</span>
-                            <span>{Math.round(getStageProgress(client.currentStage.stage, client.currentStage.status))}%</span>
-                          </div>
-                          <Progress value={getStageProgress(client.currentStage.stage, client.currentStage.status)} className="h-1.5 w-full max-w-sm" />
+                      <div className="mb-4 pr-8">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                          <span>Progresso do Follow-up</span>
+                          <span className="ml-2">{Math.round(getFollowUpProgress(client))}%</span>
                         </div>
-                      )}
+                        <Progress value={getFollowUpProgress(client)} className="h-1.5 w-full max-w-sm" />
+                      </div>
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
