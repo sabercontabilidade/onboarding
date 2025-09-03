@@ -78,26 +78,26 @@ export const api = {
   appointments: {
     list: (filters?: any) => {
       const params = new URLSearchParams()
-      if (filters?.status) params.append('status_filter', filters.status)
-      if (filters?.type) params.append('tipo_filter', filters.type)
+      if (filters?.status) params.append('status', filters.status)
+      if (filters?.type) params.append('type', filters.type)
       
-      return apiRequest<any[]>(`/agendamentos?${params.toString()}`)
+      return apiRequest<any[]>(`/appointments?${params.toString()}`)
     },
     
     create: (data: any) =>
-      apiRequest<any>('/agendamentos', {
+      apiRequest<any>('/appointments', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
     
-    update: (id: number, data: any) =>
-      apiRequest<any>(`/agendamentos/${id}`, {
+    update: (id: string, data: any) =>
+      apiRequest<any>(`/appointments/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
     
-    cancel: (id: number) =>
-      apiRequest<any>(`/agendamentos/${id}`, {
+    cancel: (id: string) =>
+      apiRequest<any>(`/appointments/${id}`, {
         method: 'DELETE',
       }),
   },

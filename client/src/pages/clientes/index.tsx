@@ -36,14 +36,22 @@ export function ClientesPage() {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      'INICIADO': 'bg-blue-100 text-blue-700',
-      'EM_ANDAMENTO': 'bg-yellow-100 text-yellow-700',
-      'CONCLUIDO': 'bg-green-100 text-green-700',
-      'SUSPENSO': 'bg-red-100 text-red-700',
-      'PENDENTE': 'bg-gray-100 text-gray-700',
-      'ATIVO': 'bg-green-100 text-green-700',
+      'onboarding': 'bg-blue-100 text-blue-700',
+      'active': 'bg-green-100 text-green-700',
+      'inactive': 'bg-red-100 text-red-700',
+      'pending': 'bg-gray-100 text-gray-700',
     }
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700'
+  }
+  
+  const getStatusLabel = (status: string) => {
+    const labels = {
+      'onboarding': 'Onboarding',
+      'active': 'Ativo',
+      'inactive': 'Inativo',
+      'pending': 'Pendente',
+    }
+    return labels[status as keyof typeof labels] || status
   }
 
   return (
@@ -108,18 +116,20 @@ export function ClientesPage() {
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">{client.nome}</h3>
+                        <h3 className="text-lg font-semibold">{client.companyName}</h3>
                         <Badge 
                           variant="secondary" 
-                          className={getStatusColor(client.status_onboarding)}
+                          className={getStatusColor(client.status)}
                         >
-                          {client.status_onboarding}
+                          {getStatusLabel(client.status)}
                         </Badge>
-                        <Badge 
-                          variant="outline"
-                        >
-                          {client.status_relacionamento}
-                        </Badge>
+                        {client.currentStage && (
+                          <Badge 
+                            variant="outline"
+                          >
+                            {client.currentStage.stage}
+                          </Badge>
+                        )}
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -128,37 +138,35 @@ export function ClientesPage() {
                           <span>{client.cnpj}</span>
                         </div>
                         
-                        {client.data_inicio_contrato && (
+                        {client.createdAt && (
                           <div className="flex items-center gap-1">
-                            <span>Início:</span>
-                            <span>{dayjs(client.data_inicio_contrato).format('DD/MM/YYYY')}</span>
+                            <span>Criado:</span>
+                            <span>{dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
                           </div>
                         )}
                         
-                        {client.contatos_empresa && client.contatos_empresa.length > 0 && (
+                        {client.contactName && (
                           <div className="flex items-center gap-1">
                             <Users className="h-4 w-4" />
-                            <span>{client.contatos_empresa.length} contato(s)</span>
+                            <span>{client.contactName}</span>
                           </div>
                         )}
                       </div>
                       
-                      {client.contatos_empresa && client.contatos_empresa[0] && (
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          {client.contatos_empresa[0].email && (
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-4 w-4" />
-                              <span>{client.contatos_empresa[0].email}</span>
-                            </div>
-                          )}
-                          {client.contatos_empresa[0].telefone && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-4 w-4" />
-                              <span>{client.contatos_empresa[0].telefone}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                        {client.contactEmail && (
+                          <div className="flex items-center gap-1">
+                            <Mail className="h-4 w-4" />
+                            <span>{client.contactEmail}</span>
+                          </div>
+                        )}
+                        {client.contactPhone && (
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-4 w-4" />
+                            <span>{client.contactPhone}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   

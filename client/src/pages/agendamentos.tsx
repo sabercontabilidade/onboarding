@@ -27,7 +27,7 @@ export function AgendamentosPage() {
   const [searchTerm, setSearchTerm] = useState('')
 
   const { data: appointments, isLoading } = useQuery({
-    queryKey: ['/api/agendamentos', filters],
+    queryKey: ['/api/appointments', filters],
     queryFn: () => api.appointments.list({
       status: filters.status === 'all' ? '' : filters.status,
       type: filters.type === 'all' ? '' : filters.type,
@@ -36,30 +36,42 @@ export function AgendamentosPage() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'REALIZADO':
+      case 'completed':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />
-      case 'AGENDADO':
+      case 'scheduled':
         return <Clock className="h-4 w-4 text-blue-500" />
-      case 'CANCELADO':
+      case 'cancelled':
         return <XCircle className="h-4 w-4 text-red-500" />
-      default:
+      case 'rescheduled':
         return <AlertCircle className="h-4 w-4 text-yellow-500" />
+      default:
+        return <AlertCircle className="h-4 w-4 text-gray-500" />
     }
   }
 
   const getStatusColor = (status: string) => {
     const colors = {
-      'REALIZADO': 'bg-green-100 text-green-700',
-      'AGENDADO': 'bg-blue-100 text-blue-700',
-      'CANCELADO': 'bg-red-100 text-red-700',
-      'PENDENTE': 'bg-yellow-100 text-yellow-700',
+      'completed': 'bg-green-100 text-green-700',
+      'scheduled': 'bg-blue-100 text-blue-700',
+      'cancelled': 'bg-red-100 text-red-700',
+      'rescheduled': 'bg-yellow-100 text-yellow-700',
     }
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700'
   }
 
+  const getStatusLabel = (status: string) => {
+    const labels = {
+      'completed': 'Realizado',
+      'scheduled': 'Agendado',
+      'cancelled': 'Cancelado',
+      'rescheduled': 'Reagendado',
+    }
+    return labels[status as keyof typeof labels] || status
+  }
+
   const filteredAppointments = appointments?.filter((appointment: any) => {
-    if (searchTerm && !appointment.titulo.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !appointment.cliente?.nome.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (searchTerm && !appointment.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !appointment.client?.companyName.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false
     }
     return true

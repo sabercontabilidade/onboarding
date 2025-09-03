@@ -153,6 +153,28 @@ export class MemStorage implements IStorage {
       status: "pending",
     });
 
+    // Create initial appointment (1 week from now)
+    const appointmentDate = new Date();
+    appointmentDate.setDate(appointmentDate.getDate() + 7);
+    appointmentDate.setHours(14, 0, 0, 0); // 14:00
+
+    const endDate = new Date(appointmentDate);
+    endDate.setHours(15, 0, 0, 0); // 15:00
+
+    await this.createAppointment({
+      clientId: id,
+      assigneeId: insertClient.assigneeId,
+      title: `Reunião inicial - ${insertClient.companyName}`,
+      description: "Reunião de onboarding inicial para apresentação da empresa e coleta de documentos",
+      type: "meeting",
+      scheduledStart: appointmentDate,
+      scheduledEnd: endDate,
+      status: "scheduled",
+      location: null,
+      meetingUrl: null,
+      googleEventId: null,
+    });
+
     // Create activity
     await this.createActivity({
       clientId: id,

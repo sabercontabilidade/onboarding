@@ -11,6 +11,7 @@ import { ClienteDetalhePage } from "@/pages/clientes/[id]";
 import { ConfiguracoesPage } from "@/pages/configuracoes";
 import { AgendamentosPage } from "@/pages/agendamentos";
 import { VisitasPage } from "@/pages/visitas";
+import { OnboardingPage } from "@/pages/onboarding";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/clientes" component={ClientesPage} />
             <Route path="/clientes/novo" component={NovoClientePage} />
             <Route path="/clientes/:id" component={ClienteDetalhePage} />
+            <Route path="/onboarding" component={OnboardingPage} />
             <Route path="/agendamentos" component={AgendamentosPage} />
             <Route path="/visitas" component={VisitasPage} />
             <Route path="/configuracoes" component={ConfiguracoesPage} />
