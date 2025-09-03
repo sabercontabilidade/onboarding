@@ -30,7 +30,7 @@ export function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   
   const { data: clients, isLoading } = useQuery({
-    queryKey: ['/api/clientes', searchTerm],
+    queryKey: ['/api/clients', searchTerm],
     queryFn: () => api.clients.list(searchTerm || undefined),
   })
 
