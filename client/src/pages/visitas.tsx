@@ -275,14 +275,6 @@ export function VisitasPage() {
                         </Badge>
                       </div>
                       
-                      {/* Progresso */}
-                      <div className="mb-4 pr-8">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                          <span>Progresso do Follow-up</span>
-                          <span className="ml-2">{Math.round(getFollowUpProgress(client))}%</span>
-                        </div>
-                        <Progress value={getFollowUpProgress(client)} className="h-1.5 w-full max-w-md" />
-                      </div>
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
