@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { api } from '@/lib/api'
 import dayjs from '@/lib/dayjs'
 
@@ -47,6 +48,9 @@ export function ClienteDetalhePage() {
   // Estado para controlar qual modal de anotação está aberto
   const [openNotesModal, setOpenNotesModal] = useState<string | null>(null)
   
+  // Estado para controlar aviso de etapas anteriores
+  const [showSequenceWarning, setShowSequenceWarning] = useState<boolean>(false)
+  
   const { data: client, isLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
     queryFn: () => api.clients.get(clientId),
@@ -64,15 +68,32 @@ export function ClienteDetalhePage() {
   
   // Função para marcar/desmarcar etapa como concluída
   const toggleStageCompletion = (stageId: string) => {
-    const newCompletedStages = completedStages.includes(stageId) 
-      ? completedStages.filter(id => id !== stageId)
-      : [...completedStages, stageId]
+    const stageOrder = ['inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
+    const currentIndex = stageOrder.indexOf(stageId)
     
+    // Se está desmarcando, permite sempre
+    if (completedStages.includes(stageId)) {
+      const newCompletedStages = completedStages.filter(id => id !== stageId)
+      setCompletedStages(newCompletedStages)
+      localStorage.setItem(`completedStages_${clientId}`, JSON.stringify(newCompletedStages))
+      window.dispatchEvent(new CustomEvent('localStorageChange'))
+      return
+    }
+    
+    // Se está marcando, verifica se a etapa anterior está concluída
+    if (currentIndex > 0) {
+      const previousStageId = stageOrder[currentIndex - 1]
+      if (!completedStages.includes(previousStageId)) {
+        setShowSequenceWarning(true)
+        setTimeout(() => setShowSequenceWarning(false), 3000) // Remove aviso após 3 segundos
+        return
+      }
+    }
+    
+    // Se chegou até aqui, pode marcar como concluído
+    const newCompletedStages = [...completedStages, stageId]
     setCompletedStages(newCompletedStages)
-    // Persistir no localStorage para sincronizar com página de onboarding
     localStorage.setItem(`completedStages_${clientId}`, JSON.stringify(newCompletedStages))
-    
-    // Disparar evento personalizado para atualizar outras páginas
     window.dispatchEvent(new CustomEvent('localStorageChange'))
   }
 
@@ -291,6 +312,17 @@ export function ClienteDetalhePage() {
 
         {/* Tab: Etapas Obrigatórias de Follow-up */}
         <TabsContent value="onboarding" className="space-y-6">
+          
+          {/* Aviso de Sequência */}
+          {showSequenceWarning && (
+            <Alert className="border-red-200 bg-red-50 animate-in slide-in-from-top-2">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-700">
+                <strong>Atenção:</strong> Você deve concluir as etapas em ordem sequencial. Complete a etapa anterior primeiro.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid gap-4">
             {getFollowUpStages().map((stage, index) => (
               <Card 
@@ -407,7 +439,7 @@ export function ClienteDetalhePage() {
                             )}
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-md">
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                           <DialogHeader>
                             <DialogTitle>Anotações - {stage.title}</DialogTitle>
                           </DialogHeader>
@@ -416,7 +448,7 @@ export function ClienteDetalhePage() {
                               placeholder="Digite suas anotações para esta etapa..."
                               value={stageNotes[stage.id] || ''}
                               onChange={(e) => saveStageNote(stage.id, e.target.value)}
-                              className="min-h-[120px]"
+                              className="min-h-[200px] text-sm"
                             />
                             <Button 
                               onClick={() => setOpenNotesModal(null)}
