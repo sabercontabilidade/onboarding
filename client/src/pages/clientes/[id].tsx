@@ -14,12 +14,17 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Star
+  Star,
+  StickyNote,
+  Upload,
+  X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { api } from '@/lib/api'
 import dayjs from '@/lib/dayjs'
 
@@ -32,6 +37,15 @@ export function ClienteDetalhePage() {
     const savedStages = localStorage.getItem(`completedStages_${clientId}`)
     return savedStages ? JSON.parse(savedStages) : []
   })
+
+  // Estado para anotações de cada etapa
+  const [stageNotes, setStageNotes] = useState<{[key: string]: string}>(() => {
+    const savedNotes = localStorage.getItem(`stageNotes_${clientId}`)
+    return savedNotes ? JSON.parse(savedNotes) : {}
+  })
+
+  // Estado para controlar qual modal de anotação está aberto
+  const [openNotesModal, setOpenNotesModal] = useState<string | null>(null)
   
   const { data: client, isLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
@@ -60,6 +74,19 @@ export function ClienteDetalhePage() {
     
     // Disparar evento personalizado para atualizar outras páginas
     window.dispatchEvent(new CustomEvent('localStorageChange'))
+  }
+
+  // Função para salvar anotação de uma etapa
+  const saveStageNote = (stageId: string, note: string) => {
+    const newNotes = { ...stageNotes, [stageId]: note }
+    setStageNotes(newNotes)
+    localStorage.setItem(`stageNotes_${clientId}`, JSON.stringify(newNotes))
+  }
+
+  // Função para lidar com upload de arquivos
+  const handleFileUpload = (stageId: string) => {
+    // Aqui você pode implementar a lógica de upload de arquivos
+    alert(`Função de upload de arquivos para a etapa ${stageId} será implementada`)
   }
 
   if (isLoading) {
@@ -344,7 +371,7 @@ export function ClienteDetalhePage() {
                       </div>
                     </div>
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -360,6 +387,56 @@ export function ClienteDetalhePage() {
                       <Button variant="outline" size="sm">
                         <Calendar className="mr-2 h-4 w-4" />
                         Agendar
+                      </Button>
+                      
+                      {/* Botão de Anotações */}
+                      <Dialog 
+                        open={openNotesModal === stage.id} 
+                        onOpenChange={(open) => setOpenNotesModal(open ? stage.id : null)}
+                      >
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                          >
+                            <StickyNote className="mr-2 h-4 w-4" />
+                            Anotações
+                            {stageNotes[stage.id] && (
+                              <div className="ml-1 w-2 h-2 bg-blue-500 rounded-full" />
+                            )}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Anotações - {stage.title}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <Textarea
+                              placeholder="Digite suas anotações para esta etapa..."
+                              value={stageNotes[stage.id] || ''}
+                              onChange={(e) => saveStageNote(stage.id, e.target.value)}
+                              className="min-h-[120px]"
+                            />
+                            <Button 
+                              onClick={() => setOpenNotesModal(null)}
+                              className="w-full"
+                            >
+                              Salvar e Fechar
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      {/* Botão de Upload */}
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleFileUpload(stage.id)}
+                        className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload
                       </Button>
                     </div>
                   </div>
