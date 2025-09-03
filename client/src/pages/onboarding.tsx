@@ -27,9 +27,16 @@ export function OnboardingPage() {
 
   const onboardingClients = clients?.filter(client => client.status === 'onboarding') || []
 
-  const getStageProgress = (stage: string) => {
+  const getStageProgress = (stage: string, status: string) => {
     const stages = ['initial_meeting', 'documentation', 'review', 'completed']
     const currentIndex = stages.indexOf(stage)
+    
+    // Se a etapa atual não está concluída, o progresso é baseado apenas nas etapas anteriores
+    if (status !== 'completed') {
+      return (currentIndex / stages.length) * 100
+    }
+    
+    // Se a etapa atual está concluída, inclui ela no cálculo
     return ((currentIndex + 1) / stages.length) * 100
   }
 
@@ -189,9 +196,9 @@ export function OnboardingPage() {
                         <div className="mb-3">
                           <div className="flex justify-between text-sm text-muted-foreground mb-1">
                             <span>Progresso do Onboarding</span>
-                            <span>{Math.round(getStageProgress(client.currentStage.stage))}%</span>
+                            <span>{Math.round(getStageProgress(client.currentStage.stage, client.currentStage.status))}%</span>
                           </div>
-                          <Progress value={getStageProgress(client.currentStage.stage)} className="h-2" />
+                          <Progress value={getStageProgress(client.currentStage.stage, client.currentStage.status)} className="h-2" />
                         </div>
                       )}
                       
