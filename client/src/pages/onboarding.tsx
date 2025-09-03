@@ -220,8 +220,7 @@ export function OnboardingPage() {
                   
                   <Link href={`/clientes/${client.id}`}>
                     <Button variant="outline" size="sm">
-                      <Eye className="mr-2 h-4 w-4" />
-                      Ver Detalhes
+                      <Eye className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
