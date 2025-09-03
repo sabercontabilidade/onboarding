@@ -145,6 +145,12 @@ export const api = {
         method: 'DELETE',
       }),
   },
+
+  // CNPJ
+  cnpj: {
+    lookup: (cnpj: string) =>
+      apiRequest<any>(`/cnpj/${cnpj}`),
+  },
 }
 
 // Helper para invalidar cache após mutações

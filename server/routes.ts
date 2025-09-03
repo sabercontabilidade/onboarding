@@ -162,6 +162,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // CNPJ lookup route
+  app.get("/api/cnpj/:cnpj", async (req, res) => {
+    try {
+      const cnpj = req.params.cnpj.replace(/\D/g, ''); // Remove non-digits
+      
+      if (cnpj.length !== 14) {
+        return res.status(400).json({ error: "CNPJ deve ter 14 dígitos" });
+      }
+
+      const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpj}`);
+      const data = await response.json();
+      
+      if (data.status === 'ERROR') {
+        return res.status(404).json({ error: "CNPJ não encontrado na Receita Federal" });
+      }
+      
+      // Normalize data format
+      const normalizedData = {
+        nome: data.nome,
+        cnpj: data.cnpj,
+        email: data.email || '',
+        telefone: data.telefone || '',
+        situacao: data.situacao,
+        atividade_principal: data.atividade_principal?.[0]?.text || '',
+        municipio: data.municipio,
+        uf: data.uf,
+        cep: data.cep,
+        logradouro: data.logradouro,
+        numero: data.numero,
+        bairro: data.bairro,
+      };
+      
+      res.json(normalizedData);
+    } catch (error) {
+      console.error('Error fetching CNPJ data:', error);
+      res.status(500).json({ error: "Erro ao consultar CNPJ na Receita Federal" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

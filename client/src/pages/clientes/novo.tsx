@@ -169,17 +169,7 @@ export function NovoClientePage() {
     setCnpjEncontrado(false)
     
     try {
-      const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`)
-      const data = await response.json()
-      
-      if (data.status === 'ERROR') {
-        toast({
-          title: 'CNPJ não encontrado',
-          description: 'Não foi possível encontrar informações para este CNPJ.',
-          variant: 'destructive',
-        })
-        return
-      }
+      const data = await api.cnpj.lookup(cnpjLimpo)
       
       // Auto-preencher campos do formulário
       form.setValue('nome', data.nome || '')
@@ -201,10 +191,10 @@ export function NovoClientePage() {
         description: `Dados da empresa ${data.nome} carregados com sucesso.`,
       })
       
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao buscar CNPJ',
-        description: 'Não foi possível consultar a Receita Federal. Tente novamente.',
+        description: error.message || 'Não foi possível consultar a Receita Federal. Tente novamente.',
         variant: 'destructive',
       })
     } finally {
