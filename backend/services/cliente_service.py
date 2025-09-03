@@ -1,12 +1,15 @@
 """
 Service para lógica de clientes
 """
+import logging
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from backend.models import Cliente, Contato, Agendamento, Visita, Usuario
 from backend.schemas import ClienteCreate, ClienteUpdate
 from backend.services.agendamento_service import AgendamentoService
+
+logger = logging.getLogger(__name__)
 
 class ClienteService:
     """Service para gerenciar clientes"""
@@ -25,6 +28,45 @@ class ClienteService:
             AgendamentoService.criar_agendamentos_obrigatorios(
                 db, cliente, cliente.responsavel_followup_id
             )
+            
+            # Criar eventos no Google Calendar se responsável conectado
+            try:
+                from backend.services.google_service import GoogleService
+                
+                credentials = GoogleService.get_user_credentials(db, cliente.responsavel_followup_id)
+                if credentials:
+                    # Buscar agendamentos recém-criados para este cliente
+                    agendamentos_novos = db.query(Agendamento).filter(
+                        Agendamento.cliente_id == cliente.id,
+                        Agendamento.google_event_id.is_(None)
+                    ).all()
+                    
+                    responsavel = db.query(Usuario).filter(
+                        Usuario.id == cliente.responsavel_followup_id
+                    ).first()
+                    
+                    for agendamento in agendamentos_novos:
+                        # Criar evento no Google Calendar
+                        event_id = GoogleService.create_calendar_event(
+                            credentials, agendamento, cliente
+                        )
+                        
+                        if event_id:
+                            agendamento.google_event_id = event_id
+                            agendamento.google_calendar_id = 'primary'
+                            
+                            # Enviar e-mail de agendamento
+                            if responsavel:
+                                GoogleService.send_appointment_email(
+                                    credentials, agendamento, cliente, responsavel
+                                )
+                    
+                    db.commit()
+                    logger.info(f"Eventos criados no Google Calendar para cliente {cliente.id}")
+                    
+            except Exception as e:
+                logger.warning(f"Erro ao criar eventos Google para cliente {cliente.id}: {e}")
+                # Não falha a criação do cliente por erro na integração
         
         return cliente
     

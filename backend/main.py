@@ -9,7 +9,7 @@ from backend.database import engine
 from backend import models
 
 # Importar routers
-from backend.routers import clientes, contatos, agendamentos, visitas, dashboard, jobs
+from backend.routers import clientes, contatos, agendamentos, visitas, dashboard, jobs, integrations
 
 # Importar scheduler
 from backend.jobs.scheduler import job_scheduler
@@ -61,6 +61,7 @@ app.include_router(agendamentos.router)
 app.include_router(visitas.router)
 app.include_router(dashboard.router)
 app.include_router(jobs.router)
+app.include_router(integrations.router)
 
 @app.get("/")
 async def root():
