@@ -32,31 +32,31 @@ export const api = {
   // Clientes
   clients: {
     list: (search?: string) =>
-      apiRequest<any[]>(`/clientes${search ? `?termo_busca=${encodeURIComponent(search)}` : ''}`),
+      apiRequest<any[]>(`/clients${search ? `?search=${encodeURIComponent(search)}` : ''}`),
     
     create: (data: any) =>
-      apiRequest<any>('/clientes', {
+      apiRequest<any>('/clients', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
     
-    get: (id: number) =>
-      apiRequest<any>(`/clientes/${id}`),
+    get: (id: string) =>
+      apiRequest<any>(`/clients/${id}`),
     
-    update: (id: number, data: any) =>
-      apiRequest<any>(`/clientes/${id}`, {
+    update: (id: string, data: any) =>
+      apiRequest<any>(`/clients/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       }),
     
-    contacts: (id: number) =>
-      apiRequest<any[]>(`/clientes/${id}/contatos`),
+    contacts: (id: string) =>
+      apiRequest<any[]>(`/clients/${id}/contacts`),
     
-    appointments: (id: number) =>
-      apiRequest<any[]>(`/clientes/${id}/agendamentos`),
+    appointments: (id: string) =>
+      apiRequest<any[]>(`/clients/${id}/appointments`),
     
-    visits: (id: number) =>
-      apiRequest<any[]>(`/clientes/${id}/visitas`),
+    visits: (id: string) =>
+      apiRequest<any[]>(`/clients/${id}/visits`),
   },
 
   // Contatos

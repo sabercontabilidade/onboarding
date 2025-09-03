@@ -113,23 +113,37 @@ export function NovoClientePage() {
   })
 
   const createClientMutation = useMutation({
-    mutationFn: (data: ClienteFormData) => api.clients.create({
-      ...data,
-      contatos_empresa: contatos,
-      canais: canaisSelecionados,
-    }),
+    mutationFn: (data: ClienteFormData) => {
+      // Converter dados do frontend para o formato do backend
+      const firstContact = contatos[0] || { nome: '', email: '', telefone: '' }
+      
+      const backendData = {
+        companyName: data.nome,
+        cnpj: data.cnpj,
+        contactName: firstContact.nome || 'Sem contato',
+        contactEmail: firstContact.email || '',
+        contactPhone: firstContact.telefone || '',
+        status: 'onboarding',
+        notes: data.observacoes || '',
+        assigneeId: null,
+        sector: null,
+      }
+      
+      return api.clients.create(backendData)
+    },
     onSuccess: () => {
       toast({
         title: 'Cliente criado com sucesso!',
         description: 'O cliente foi cadastrado e os agendamentos obrigatórios foram criados.',
       })
-      invalidateQueries(['/api/clientes'])
+      invalidateQueries(['/api/clients'])
       setLocation('/clientes')
     },
     onError: (error) => {
+      console.error('Erro ao criar cliente:', error)
       toast({
         title: 'Erro ao criar cliente',
-        description: error.message,
+        description: error.message || 'Erro desconhecido ao criar cliente',
         variant: 'destructive',
       })
     },
