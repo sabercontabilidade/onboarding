@@ -25,7 +25,6 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { api } from '@/lib/api'
 import dayjs from '@/lib/dayjs'
 
@@ -49,7 +48,7 @@ export function ClienteDetalhePage() {
   const [openNotesModal, setOpenNotesModal] = useState<string | null>(null)
   
   // Estado para controlar aviso de etapas anteriores
-  const [showSequenceWarning, setShowSequenceWarning] = useState<boolean>(false)
+  const [showSequenceWarningModal, setShowSequenceWarningModal] = useState<boolean>(false)
   
   const { data: client, isLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
@@ -84,8 +83,7 @@ export function ClienteDetalhePage() {
     if (currentIndex > 0) {
       const previousStageId = stageOrder[currentIndex - 1]
       if (!completedStages.includes(previousStageId)) {
-        setShowSequenceWarning(true)
-        setTimeout(() => setShowSequenceWarning(false), 3000) // Remove aviso após 3 segundos
+        setShowSequenceWarningModal(true)
         return
       }
     }
@@ -313,15 +311,30 @@ export function ClienteDetalhePage() {
         {/* Tab: Etapas Obrigatórias de Follow-up */}
         <TabsContent value="onboarding" className="space-y-6">
           
-          {/* Aviso de Sequência */}
-          {showSequenceWarning && (
-            <Alert className="border-red-200 bg-red-50 animate-in slide-in-from-top-2">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-700">
-                <strong>Atenção:</strong> Você deve concluir as etapas em ordem sequencial. Complete a etapa anterior primeiro.
-              </AlertDescription>
-            </Alert>
-          )}
+          {/* Modal de Aviso de Sequência */}
+          <Dialog open={showSequenceWarningModal} onOpenChange={setShowSequenceWarningModal}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-700">
+                  <AlertCircle className="h-5 w-5" />
+                  Atenção
+                </DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <p className="text-sm text-gray-700">
+                  Você deve concluir as etapas em ordem sequencial. Complete a etapa anterior primeiro.
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <Button 
+                  onClick={() => setShowSequenceWarningModal(false)}
+                  className="w-20"
+                >
+                  OK
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           
           <div className="grid gap-4">
             {getFollowUpStages().map((stage, index) => (
