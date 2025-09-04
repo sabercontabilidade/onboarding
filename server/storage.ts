@@ -86,8 +86,20 @@ export class MemStorage implements IStorage {
     return Array.from(this.clients.values());
   }
 
-  async getClientsWithDetails(): Promise<ClientWithDetails[]> {
-    const clients = Array.from(this.clients.values());
+  async getClientsWithDetails(search?: string): Promise<ClientWithDetails[]> {
+    let clients = Array.from(this.clients.values());
+    
+    // Apply search filter if provided
+    if (search) {
+      const searchLower = search.toLowerCase();
+      clients = clients.filter(client => 
+        client.companyName.toLowerCase().includes(searchLower) ||
+        client.cnpj.toLowerCase().includes(searchLower) ||
+        (client.contactName && client.contactName.toLowerCase().includes(searchLower)) ||
+        (client.contactEmail && client.contactEmail.toLowerCase().includes(searchLower))
+      );
+    }
+    
     const clientsWithDetails: ClientWithDetails[] = [];
 
     for (const client of clients) {
