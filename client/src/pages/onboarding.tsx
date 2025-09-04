@@ -57,6 +57,14 @@ export function OnboardingPage() {
     return (completedStagesCount / followUpStages.length) * 100
   }
 
+  const getOnboardingInProgress = () => {
+    return onboardingClients.filter(client => getFollowUpProgress(client) < 100).length
+  }
+
+  const getOnboardingCompleted = () => {
+    return onboardingClients.filter(client => getFollowUpProgress(client) === 100).length
+  }
+
   const getStageLabel = (stage: string) => {
     const labels = {
       'initial_meeting': 'Reunião Inicial',
@@ -122,10 +130,10 @@ export function OnboardingPage() {
             <div className="flex items-center">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Reunião Inicial</p>
+                <p className="text-sm font-medium text-muted-foreground">Onboarding em Andamento</p>
                 <div className="flex items-center">
                   <span className="text-2xl font-bold">
-                    {onboardingClients.filter(c => c.currentStage?.stage === 'initial_meeting').length}
+                    {getOnboardingInProgress()}
                   </span>
                 </div>
               </div>
@@ -136,12 +144,12 @@ export function OnboardingPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
               <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Documentação</p>
+                <p className="text-sm font-medium text-muted-foreground">Onboarding Finalizados</p>
                 <div className="flex items-center">
                   <span className="text-2xl font-bold">
-                    {onboardingClients.filter(c => c.currentStage?.stage === 'documentation').length}
+                    {getOnboardingCompleted()}
                   </span>
                 </div>
               </div>
