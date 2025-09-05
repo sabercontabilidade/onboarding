@@ -76,6 +76,7 @@ export function ClienteVisitasPage() {
       
       // Invalidar cache para recarregar a lista
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/visits`] })
+      queryClient.invalidateQueries({ queryKey: ['/api/visits'] })
       
       toast({
         title: "ATA registrada",

@@ -68,7 +68,7 @@ export function VisitasPage() {
   }
 
   // Buscar visitas da API
-  const { data: allVisits } = useQuery({
+  const { data: allVisits, refetch: refetchVisits } = useQuery({
     queryKey: ['/api/visits'],
     queryFn: () => api.visits.list(),
     initialData: []
