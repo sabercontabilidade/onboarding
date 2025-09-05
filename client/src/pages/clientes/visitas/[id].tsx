@@ -65,7 +65,7 @@ export function ClienteVisitasPage() {
       // Criar nova visita/ATA
       const visitData = {
         clientId: clientId,
-        date: formData.data,
+        date: new Date(formData.data + 'T10:00:00').toISOString(),
         participants: formData.participantes,
         description: formData.descricao,
         type: 'technical_visit',
