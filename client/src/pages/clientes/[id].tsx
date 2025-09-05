@@ -774,7 +774,7 @@ export function ClienteDetalhePage() {
             </DialogContent>
           </Dialog>
           
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {getFollowUpStages().map((stage, index) => {
               // Se não for o Plano de Sucesso e o Plano de Sucesso não foi preenchido, desabilitar o card
               const isDisabled = !stage.isPlanoSucesso && !isPlanoSucessoCompleted()
@@ -782,105 +782,148 @@ export function ClienteDetalhePage() {
               return (
                 <Card 
                   key={stage.id} 
-                  className={`transition-all border-l-4 ${
+                  className={`group relative overflow-hidden transition-all duration-300 border ${
                     isDisabled 
-                      ? 'opacity-50 cursor-not-allowed bg-gray-50' 
-                      : 'hover:shadow-md'
-                  } ${getPriorityColor(stage.priority, stage.isOverdue, stage.isCompleted)}`}
+                      ? 'opacity-60 cursor-not-allowed bg-gray-50/50 border-gray-200' 
+                      : 'hover:shadow-xl hover:scale-[1.01] bg-white border-gray-100'
+                  }`}
                 >
-                <CardContent className="p-6">
+                  {/* Borda lateral colorida baseada no status */}
+                  <div className={`absolute left-0 top-0 h-full w-1 transition-all duration-300 ${
+                    stage.isCompleted ? 'bg-green-500' :
+                    stage.isOverdue ? 'bg-red-500' :
+                    stage.priority === 'high' ? 'bg-gray-600' : 'bg-gray-300'
+                  }`} />
+                  
+                  {/* Background gradient sutil no hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-50/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                <CardContent className="p-8 relative">
                   {isDisabled && !stage.isPlanoSucesso && (
-                    <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                      <p className="text-sm text-orange-700 font-medium">
-                        ⚠️ Esta etapa estará disponível após o preenchimento do "Plano de Sucesso do Cliente"
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-sm text-amber-700 font-medium flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        Esta etapa estará disponível após o preenchimento do "Plano de Sucesso do Cliente"
                       </p>
                     </div>
                   )}
                   
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
+                    <div className="flex items-start gap-6 flex-1">
+                      {/* Icon container modernizado */}
                       <div className="flex-shrink-0">
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        <div className={`relative w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-300 group-hover:shadow-xl ${
                           isDisabled && !stage.isPlanoSucesso
-                            ? 'bg-gray-100 border-gray-300'
+                            ? 'bg-gray-100 shadow-sm'
                             : stage.isCompleted 
-                              ? 'bg-orange-100 border-orange-300'
+                              ? 'bg-green-50 border-2 border-green-200 group-hover:bg-green-100'
                               : stage.isOverdue 
-                                ? 'bg-red-100 border-red-300' 
+                                ? 'bg-red-50 border-2 border-red-200 group-hover:bg-red-100' 
                                 : stage.priority === 'high' 
-                                  ? 'bg-orange-50 border-orange-200'
-                                  : 'bg-gray-100 border-gray-300'
-                        } border-2`}>
+                                  ? 'bg-gray-50 border-2 border-gray-200 group-hover:bg-gray-100'
+                                  : 'bg-gray-50 border-2 border-gray-200 group-hover:bg-gray-100'
+                        }`}>
                           {isDisabled && !stage.isPlanoSucesso ? (
-                            <Calendar className="h-6 w-6 text-gray-400" />
+                            <Calendar className="h-8 w-8 text-gray-400" />
                           ) : stage.isCompleted ? (
-                            <CheckCircle2 className="h-6 w-6 text-orange-600" />
+                            <CheckCircle2 className="h-8 w-8 text-green-600" />
                           ) : stage.isOverdue ? (
-                            <AlertCircle className="h-6 w-6 text-red-600" />
+                            <AlertCircle className="h-8 w-8 text-red-600" />
                           ) : stage.priority === 'high' ? (
-                            <Star className="h-6 w-6 text-orange-500" />
+                            <Star className="h-8 w-8 text-gray-600" />
                           ) : (
-                            <Calendar className="h-6 w-6 text-gray-600" />
+                            <Calendar className="h-8 w-8 text-gray-600" />
+                          )}
+                          
+                          {/* Badge pequeno para progresso no canto */}
+                          {!isDisabled && (
+                            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full shadow-md border border-gray-200 flex items-center justify-center">
+                              <span className="text-xs font-bold text-gray-700">{index + 1}</span>
+                            </div>
                           )}
                         </div>
                       </div>
                       
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold">{stage.title}</h3>
-                          {stage.isCompleted ? (
-                            <Badge variant="default" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-                              Concluído
-                            </Badge>
-                          ) : stage.isOverdue ? (
-                            <Badge variant="destructive" className="text-xs">
-                              Atrasado
-                            </Badge>
-                          ) : !stage.isOverdue && dayjs().isAfter(stage.targetDate.subtract(7, 'day')) ? (
-                            <Badge variant="secondary" className="text-xs bg-orange-50 text-orange-600 border-orange-200">
-                              Próximo
-                            </Badge>
-                          ) : null}
+                      <div className="flex-1 space-y-4">
+                        {/* Header com título e badges */}
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-gray-800 transition-colors">
+                            {stage.title}
+                          </h3>
+                          
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {stage.isCompleted ? (
+                              <Badge className="bg-green-50 text-green-700 border-green-200 px-3 py-1">
+                                ✓ Concluído
+                              </Badge>
+                            ) : stage.isOverdue ? (
+                              <Badge variant="destructive" className="px-3 py-1">
+                                ⚠️ Atrasado
+                              </Badge>
+                            ) : !stage.isOverdue && dayjs().isAfter(stage.targetDate.subtract(7, 'day')) ? (
+                              <Badge className="bg-gray-50 text-gray-700 border-gray-200 px-3 py-1">
+                                🔥 Próximo
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="px-3 py-1">
+                                📅 Agendado
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {stage.description}
-                        </p>
+                        {/* Descrição */}
+                        <div className="bg-gray-50 rounded-xl p-4 group-hover:bg-gray-100/50 transition-colors">
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {stage.description}
+                          </p>
+                        </div>
                         
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span className={stage.isOverdue ? 'text-red-600 font-medium' : ''}>
-                              Data prevista: {stage.targetDate.format('DD/MM/YYYY')}
-                            </span>
+                        {/* Info cards horizontais */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group-hover:bg-gray-100/70 transition-colors">
+                            <Calendar className="h-4 w-4 text-gray-600" />
+                            <div>
+                              <p className="text-xs text-gray-600 font-medium">Data prevista</p>
+                              <p className={`text-sm font-semibold ${stage.isOverdue ? 'text-red-600' : 'text-gray-800'}`}>
+                                {stage.targetDate.format('DD/MM/YYYY')}
+                              </p>
+                            </div>
                           </div>
                           
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span className="text-muted-foreground">
-                              {stage.targetDate.fromNow()}
-                            </span>
+                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group-hover:bg-gray-100/70 transition-colors">
+                            <Clock className="h-4 w-4 text-gray-600" />
+                            <div>
+                              <p className="text-xs text-gray-600 font-medium">Status temporal</p>
+                              <p className="text-sm font-semibold text-gray-800">
+                                {stage.targetDate.fromNow()}
+                              </p>
+                            </div>
                           </div>
                           
                           {stage.isOverdue && (
-                            <div className="flex items-center gap-1 text-red-600">
-                              <AlertCircle className="h-4 w-4" />
-                              <span className="font-medium">
-                                {Math.abs(dayjs().diff(stage.targetDate, 'day'))} dias em atraso
-                              </span>
+                            <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                              <div>
+                                <p className="text-xs text-red-600 font-medium">Atraso</p>
+                                <p className="text-sm font-semibold text-red-800">
+                                  {Math.abs(dayjs().diff(stage.targetDate, 'day'))} dias
+                                </p>
+                              </div>
                             </div>
                           )}
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex gap-2 flex-wrap">
+                    {/* Action buttons com layout vertical */}
+                    <div className="flex flex-col gap-3 ml-4">
                       {stage.isPlanoSucesso ? (
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => setShowPlanoSucessoModal(true)}
-                          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                          className="text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all"
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           Preencher
@@ -897,17 +940,21 @@ export function ClienteDetalhePage() {
                                 ? "text-gray-400 border-gray-200 cursor-not-allowed"
                                 : stage.isCompleted 
                                   ? "text-gray-600 border-gray-200 hover:bg-gray-50"
-                                  : "text-green-600 border-green-200 hover:bg-green-50"
+                                  : "text-green-600 border-green-200 hover:bg-green-50 hover:border-green-300"
                             }
                           >
                             <CheckCircle2 className="mr-2 h-4 w-4" />
-                            {stage.isCompleted ? 'Desmarcar' : 'Marcar Concluído'}
+                            {stage.isCompleted ? 'Desmarcar' : 'Concluir'}
                           </Button>
                           <Button 
                             variant="outline" 
                             size="sm"
                             disabled={isDisabled}
-                            className={isDisabled ? "text-gray-400 border-gray-200 cursor-not-allowed" : ""}
+                            className={
+                              isDisabled 
+                                ? "text-gray-400 border-gray-200 cursor-not-allowed" 
+                                : "hover:bg-blue-50 hover:border-blue-200"
+                            }
                           >
                             <Calendar className="mr-2 h-4 w-4" />
                             Agendar
@@ -930,14 +977,14 @@ export function ClienteDetalhePage() {
                                 disabled={isDisabled}
                                 className={
                                   isDisabled 
-                                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
-                                    : "text-blue-600 border-blue-200 hover:bg-blue-50"
+                                    ? "text-gray-400 border-gray-200 cursor-not-allowed" 
+                                    : "hover:bg-blue-50 hover:border-blue-200 relative text-blue-600 border-blue-200"
                                 }
                               >
                                 <StickyNote className="mr-2 h-4 w-4" />
-                                Anotações
+                                Notas
                                 {stageNotes[stage.id] && (
-                                  <div className="ml-1 w-2 h-2 bg-blue-500 rounded-full" />
+                                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
                                 )}
                               </Button>
                             </DialogTrigger>
