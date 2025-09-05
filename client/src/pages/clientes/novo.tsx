@@ -62,7 +62,7 @@ const clienteSchema = z.object({
   nome: z.string().min(1, 'Nome da empresa é obrigatório'),
   cnpj: z.string().min(1, 'CNPJ é obrigatório').refine(validarCNPJ, 'CNPJ inválido'),
   data_inicio_contrato: z.string().min(1, 'Data de início do contrato é obrigatória'),
-  contatos_empresa: z.array(contatoSchema).min(1, 'Pelo menos um contato é obrigatório'),
+  contatos_empresa: z.array(contatoSchema).default([]),
   canais: z.array(z.string()).default([]),
   status_onboarding: z.enum(['INICIADO', 'EM_ANDAMENTO', 'CONCLUIDO', 'SUSPENSO']).default('INICIADO'),
   status_relacionamento: z.enum(['PENDENTE', 'ATIVO', 'INATIVO']).default('PENDENTE'),
@@ -171,13 +171,19 @@ export function NovoClientePage() {
 
   const adicionarContato = () => {
     if (novoContato.nome && novoContato.email && novoContato.telefone && novoContato.cargo) {
-      setContatos([...contatos, novoContato])
+      const novosContatos = [...contatos, novoContato]
+      setContatos(novosContatos)
+      // Atualizar o campo do formulário também
+      form.setValue('contatos_empresa', novosContatos)
       setNovoContato({ nome: '', email: '', telefone: '', cargo: '' })
     }
   }
 
   const removerContato = (index: number) => {
-    setContatos(contatos.filter((_, i) => i !== index))
+    const novosContatos = contatos.filter((_, i) => i !== index)
+    setContatos(novosContatos)
+    // Atualizar o campo do formulário também
+    form.setValue('contatos_empresa', novosContatos)
   }
 
   const toggleCanal = (canal: string) => {
