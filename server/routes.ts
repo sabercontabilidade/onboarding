@@ -184,14 +184,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/visits", async (req, res) => {
     try {
-      console.log("Visit data received:", JSON.stringify(req.body, null, 2));
+      // Convert date string to Date object if necessary
+      if (req.body.date && typeof req.body.date === 'string') {
+        req.body.date = new Date(req.body.date);
+      }
+      
       const visitData = insertVisitSchema.parse(req.body);
-      console.log("Visit data parsed:", JSON.stringify(visitData, null, 2));
       const visit = await storage.createVisit(visitData);
       res.status(201).json(visit);
     } catch (error) {
       console.error("Visit validation error:", error);
-      res.status(400).json({ error: "Invalid visit data", details: error.message });
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(400).json({ error: "Invalid visit data", details: errorMessage });
     }
   });
 
