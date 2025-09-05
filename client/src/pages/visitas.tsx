@@ -70,7 +70,7 @@ export function VisitasPage() {
   // Buscar visitas da API
   const { data: allVisits } = useQuery({
     queryKey: ['/api/visits'],
-    queryFn: () => [],
+    queryFn: () => api.visits.list(),
     initialData: []
   })
 
@@ -132,7 +132,7 @@ export function VisitasPage() {
       </Card>
 
       {/* Estatísticas dos Clientes */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
@@ -141,38 +141,6 @@ export function VisitasPage() {
                 <p className="text-sm font-medium text-muted-foreground">Total de Clientes</p>
                 <div className="flex items-center">
                   <span className="text-2xl font-bold">{allClients.length}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Em Onboarding</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">
-                    {allClients.filter(c => c.status === 'onboarding').length}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Ativos</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">
-                    {allClients.filter(c => c.status === 'active').length}
-                  </span>
                 </div>
               </div>
             </div>
