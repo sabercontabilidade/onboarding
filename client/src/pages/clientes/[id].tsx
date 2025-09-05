@@ -271,11 +271,11 @@ export function ClienteDetalhePage() {
   }
 
   const getPriorityColor = (priority: string, isOverdue: boolean, isCompleted: boolean) => {
-    if (isCompleted) return 'bg-orange-50 text-orange-700 border-orange-300'
-    if (isOverdue) return 'bg-red-100 text-red-700 border-red-300'
+    if (isCompleted) return 'bg-gray-50 text-gray-700 border-gray-300'
+    if (isOverdue) return 'bg-gray-100 text-gray-700 border-gray-400'
     
     const colors = {
-      'high': 'bg-orange-100 text-orange-800 border-orange-300',
+      'high': 'bg-gray-100 text-gray-800 border-gray-300',
       'medium': 'bg-gray-100 text-gray-700 border-gray-300',
       'low': 'bg-gray-50 text-gray-600 border-gray-200'
     }
@@ -790,8 +790,8 @@ export function ClienteDetalhePage() {
                 >
                 <CardContent className="p-6">
                   {isDisabled && !stage.isPlanoSucesso && (
-                    <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                      <p className="text-sm text-orange-700 font-medium">
+                    <div className="mb-4 p-3 bg-gray-50 border border-gray-300 rounded-lg">
+                      <p className="text-sm text-gray-700 font-medium">
                         ⚠️ Esta etapa estará disponível após o preenchimento do "Plano de Sucesso do Cliente"
                       </p>
                     </div>
@@ -804,21 +804,21 @@ export function ClienteDetalhePage() {
                           isDisabled && !stage.isPlanoSucesso
                             ? 'bg-gray-100 border-gray-300'
                             : stage.isCompleted 
-                              ? 'bg-orange-100 border-orange-300'
+                              ? 'bg-gray-100 border-gray-400'
                               : stage.isOverdue 
-                                ? 'bg-red-100 border-red-300' 
+                                ? 'bg-gray-200 border-gray-400' 
                                 : stage.priority === 'high' 
-                                  ? 'bg-orange-50 border-orange-200'
+                                  ? 'bg-gray-50 border-gray-300'
                                   : 'bg-gray-100 border-gray-300'
                         } border-2`}>
                           {isDisabled && !stage.isPlanoSucesso ? (
                             <Calendar className="h-6 w-6 text-gray-400" />
                           ) : stage.isCompleted ? (
-                            <CheckCircle2 className="h-6 w-6 text-orange-600" />
+                            <CheckCircle2 className="h-6 w-6 text-gray-600" />
                           ) : stage.isOverdue ? (
-                            <AlertCircle className="h-6 w-6 text-red-600" />
+                            <AlertCircle className="h-6 w-6 text-gray-700" />
                           ) : stage.priority === 'high' ? (
-                            <Star className="h-6 w-6 text-orange-500" />
+                            <Star className="h-6 w-6 text-gray-600" />
                           ) : (
                             <Calendar className="h-6 w-6 text-gray-600" />
                           )}
@@ -829,15 +829,15 @@ export function ClienteDetalhePage() {
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-lg font-semibold">{stage.title}</h3>
                           {stage.isCompleted ? (
-                            <Badge variant="default" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
+                            <Badge variant="default" className="text-xs bg-gray-100 text-gray-700 border-gray-300">
                               Concluído
                             </Badge>
                           ) : stage.isOverdue ? (
-                            <Badge variant="destructive" className="text-xs">
+                            <Badge variant="secondary" className="text-xs bg-gray-200 text-gray-700 border-gray-400">
                               Atrasado
                             </Badge>
                           ) : !stage.isOverdue && dayjs().isAfter(stage.targetDate.subtract(7, 'day')) ? (
-                            <Badge variant="secondary" className="text-xs bg-orange-50 text-orange-600 border-orange-200">
+                            <Badge variant="secondary" className="text-xs bg-gray-50 text-gray-600 border-gray-300">
                               Próximo
                             </Badge>
                           ) : null}
@@ -850,7 +850,7 @@ export function ClienteDetalhePage() {
                         <div className="flex items-center gap-4 text-sm">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            <span className={stage.isOverdue ? 'text-red-600 font-medium' : ''}>
+                            <span className={stage.isOverdue ? 'text-gray-700 font-medium' : ''}>
                               Data prevista: {stage.targetDate.format('DD/MM/YYYY')}
                             </span>
                           </div>
@@ -863,7 +863,7 @@ export function ClienteDetalhePage() {
                           </div>
                           
                           {stage.isOverdue && (
-                            <div className="flex items-center gap-1 text-red-600">
+                            <div className="flex items-center gap-1 text-gray-700">
                               <AlertCircle className="h-4 w-4" />
                               <span className="font-medium">
                                 {Math.abs(dayjs().diff(stage.targetDate, 'day'))} dias em atraso
@@ -880,7 +880,7 @@ export function ClienteDetalhePage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => setShowPlanoSucessoModal(true)}
-                          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                          className="text-gray-600 border-gray-300 hover:bg-gray-50"
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           Preencher
