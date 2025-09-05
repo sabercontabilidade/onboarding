@@ -53,6 +53,31 @@ export function ClienteDetalhePage() {
   // Estado para controlar modal do Plano de Sucesso
   const [showPlanoSucessoModal, setShowPlanoSucessoModal] = useState<boolean>(false)
   
+  // Estado para os dados do formulário do Plano de Sucesso
+  const [planoSucessoData, setPlanoSucessoData] = useState({
+    nomeCliente: '',
+    telefoneEmail: '',
+    dataInicioContrato: '',
+    quantidadeCnpjs: '',
+    cnpjsRegimeTributario: '',
+    cnpjPrincipal: '',
+    foiFeitoPlanejamento: '',
+    detalhePlanejamento: '',
+    motivosTrocaContador: '',
+    havera_abertura_empresa: '',
+    prazoAberturaRegime: '',
+    empresaFolhaPagamento: '',
+    haveraTranferenciaFuncionarios: '',
+    funcionariosTransferidos: '',
+    sistemaUtilizado: '',
+    clientePossuiRiscos: '',
+    clientePossuiTimeInterno: '',
+    detalheTimeInterno: '',
+    contatoAntigaContabilidade: '',
+    contabilidadeComunicadaRescisao: '',
+    perfilCliente: ''
+  })
+  
   const { data: client, isLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
     queryFn: () => api.clients.get(clientId),
@@ -368,52 +393,331 @@ export function ClienteDetalhePage() {
                   <p className="text-sm text-muted-foreground">{client?.contactName}</p>
                 </div>
 
-                {/* Formulário - Estrutura básica que será personalizada */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Formulário do Plano de Sucesso */}
+                <div className="space-y-8">
+                  
+                  {/* Seção 1: Informações Básicas */}
                   <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-orange-600 border-b border-orange-200 pb-2">
+                      Informações Básicas
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Nome do cliente *</label>
+                        <input 
+                          type="text"
+                          value={planoSucessoData.nomeCliente}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, nomeCliente: e.target.value})}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="Nome completo do cliente"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Telefone e e-mail de contato *</label>
+                        <input 
+                          type="text"
+                          value={planoSucessoData.telefoneEmail}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, telefoneEmail: e.target.value})}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="(11) 99999-9999 - email@exemplo.com"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Data de início do contrato *</label>
+                        <input 
+                          type="date"
+                          value={planoSucessoData.dataInicioContrato}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, dataInicioContrato: e.target.value})}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Quantos CNPJs o cliente possui? *</label>
+                        <select 
+                          value={planoSucessoData.quantidadeCnpjs}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, quantidadeCnpjs: e.target.value})}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        >
+                          <option value="">Selecione</option>
+                          <option value="1">1 CNPJ</option>
+                          <option value="2">2 CNPJs</option>
+                          <option value="3">3 CNPJs</option>
+                          <option value="4+">4 ou mais CNPJs</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seção 2: Informações Tributárias */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-orange-600 border-b border-orange-200 pb-2">
+                      Informações Tributárias
+                    </h3>
+                    
                     <div>
-                      <label className="text-sm font-medium">Objetivos Principais</label>
+                      <label className="text-sm font-medium">Informe o(s) CNPJ(s) e regime tributário da(s) empresa(s) que iremos atender *</label>
                       <Textarea 
-                        placeholder="Descreva os principais objetivos do cliente..."
+                        value={planoSucessoData.cnpjsRegimeTributario}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, cnpjsRegimeTributario: e.target.value})}
+                        placeholder="Ex: 12.345.678/0001-90 - Simples Nacional"
                         className="mt-1"
+                        rows={3}
                       />
                     </div>
+                    
+                    {parseInt(planoSucessoData.quantidadeCnpjs) > 1 && (
+                      <div>
+                        <label className="text-sm font-medium">Se o cliente possuir mais de um CNPJ, existe um que seja principal? Se sim, qual?</label>
+                        <input 
+                          type="text"
+                          value={planoSucessoData.cnpjPrincipal}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, cnpjPrincipal: e.target.value})}
+                          className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                          placeholder="CNPJ principal ou 'Não possui'"
+                        />
+                      </div>
+                    )}
+                    
                     <div>
-                      <label className="text-sm font-medium">Expectativas</label>
+                      <label className="text-sm font-medium">Foi feito planejamento tributário? *</label>
+                      <div className="flex gap-4 mt-2">
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="planejamento" 
+                            value="Sim"
+                            checked={planoSucessoData.foiFeitoPlanejamento === 'Sim'}
+                            onChange={(e) => setPlanoSucessoData({...planoSucessoData, foiFeitoPlanejamento: e.target.value})}
+                            className="mr-2"
+                          />
+                          Sim
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="planejamento" 
+                            value="Não"
+                            checked={planoSucessoData.foiFeitoPlanejamento === 'Não'}
+                            onChange={(e) => setPlanoSucessoData({...planoSucessoData, foiFeitoPlanejamento: e.target.value})}
+                            className="mr-2"
+                          />
+                          Não
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {planoSucessoData.foiFeitoPlanejamento === 'Sim' && (
+                      <div>
+                        <label className="text-sm font-medium">Detalhe abaixo o planejamento feito</label>
+                        <Textarea 
+                          value={planoSucessoData.detalhePlanejamento}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, detalhePlanejamento: e.target.value})}
+                          placeholder="Descreva os detalhes do planejamento tributário realizado..."
+                          className="mt-1"
+                          rows={3}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Seção 3: Motivação e Contexto */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-orange-600 border-b border-orange-200 pb-2">
+                      Motivação e Contexto
+                    </h3>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Quais os motivos (dores) que levaram o cliente a trocar de contador? *</label>
                       <Textarea 
-                        placeholder="Quais são as expectativas do cliente..."
+                        value={planoSucessoData.motivosTrocaContador}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, motivosTrocaContador: e.target.value})}
+                        placeholder="Descreva os principais motivos e problemas enfrentados..."
                         className="mt-1"
+                        rows={3}
                       />
                     </div>
+                    
                     <div>
-                      <label className="text-sm font-medium">Desafios Identificados</label>
+                      <label className="text-sm font-medium">Haverá abertura de empresa? Se sim, qual o prazo máximo para a abertura e o regime tributário da nova empresa?</label>
                       <Textarea 
-                        placeholder="Principais desafios e pontos de atenção..."
+                        value={planoSucessoData.havera_abertura_empresa}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, havera_abertura_empresa: e.target.value})}
+                        placeholder="Ex: Sim, prazo de 30 dias, Simples Nacional / Não"
                         className="mt-1"
+                        rows={2}
                       />
                     </div>
                   </div>
-                  
+
+                  {/* Seção 4: Recursos Humanos */}
                   <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-orange-600 border-b border-orange-200 pb-2">
+                      Recursos Humanos
+                    </h3>
+                    
                     <div>
-                      <label className="text-sm font-medium">Estratégia de Sucesso</label>
+                      <label className="text-sm font-medium">Empresa(s) com folha de pagamento? Quantos funcionários? Tem apontamentos? Qual a data de pagamento dos funcionários?</label>
                       <Textarea 
-                        placeholder="Como garantir o sucesso deste cliente..."
+                        value={planoSucessoData.empresaFolhaPagamento}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, empresaFolhaPagamento: e.target.value})}
+                        placeholder="Ex: Sim, 15 funcionários, sem apontamentos, pagamento dia 5"
                         className="mt-1"
+                        rows={2}
                       />
                     </div>
+                    
                     <div>
-                      <label className="text-sm font-medium">Marcos e Metas</label>
-                      <Textarea 
-                        placeholder="Defina marcos importantes e metas..."
-                        className="mt-1"
+                      <label className="text-sm font-medium">Haverá transferência de funcionários? Se sim, para qual empresa?</label>
+                      <input 
+                        type="text"
+                        value={planoSucessoData.haveraTranferenciaFuncionarios}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, haveraTranferenciaFuncionarios: e.target.value})}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        placeholder="Ex: Sim, para empresa X / Não"
                       />
                     </div>
+                    
+                    {planoSucessoData.haveraTranferenciaFuncionarios.toLowerCase().includes('sim') && (
+                      <div>
+                        <label className="text-sm font-medium">Quais funcionários serão transferidos?</label>
+                        <Textarea 
+                          value={planoSucessoData.funcionariosTransferidos}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, funcionariosTransferidos: e.target.value})}
+                          placeholder="Liste os funcionários que serão transferidos..."
+                          className="mt-1"
+                          rows={2}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Seção 5: Tecnologia e Processos */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-orange-600 border-b border-orange-200 pb-2">
+                      Tecnologia e Processos
+                    </h3>
+                    
                     <div>
-                      <label className="text-sm font-medium">Observações</label>
+                      <label className="text-sm font-medium">Qual o sistema (software) utilizado pelo cliente? *</label>
+                      <input 
+                        type="text"
+                        value={planoSucessoData.sistemaUtilizado}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, sistemaUtilizado: e.target.value})}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        placeholder="Ex: SAP, Totvs, Oracle, planilhas Excel, etc."
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Cliente possui riscos (contábeis, fiscais e trabalhistas)? Explique *</label>
                       <Textarea 
-                        placeholder="Outras observações importantes..."
+                        value={planoSucessoData.clientePossuiRiscos}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, clientePossuiRiscos: e.target.value})}
+                        placeholder="Descreva os riscos identificados ou 'Não possui riscos'"
                         className="mt-1"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Seção 6: Time Interno e Relacionamento */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-orange-600 border-b border-orange-200 pb-2">
+                      Time Interno e Relacionamento
+                    </h3>
+                    
+                    <div>
+                      <label className="text-sm font-medium">O cliente possui time interno? *</label>
+                      <div className="flex gap-4 mt-2">
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="timeInterno" 
+                            value="Sim"
+                            checked={planoSucessoData.clientePossuiTimeInterno === 'Sim'}
+                            onChange={(e) => setPlanoSucessoData({...planoSucessoData, clientePossuiTimeInterno: e.target.value})}
+                            className="mr-2"
+                          />
+                          Sim
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="timeInterno" 
+                            value="Não"
+                            checked={planoSucessoData.clientePossuiTimeInterno === 'Não'}
+                            onChange={(e) => setPlanoSucessoData({...planoSucessoData, clientePossuiTimeInterno: e.target.value})}
+                            className="mr-2"
+                          />
+                          Não
+                        </label>
+                      </div>
+                    </div>
+                    
+                    {planoSucessoData.clientePossuiTimeInterno === 'Sim' && (
+                      <div>
+                        <label className="text-sm font-medium">Detalhe abaixo o nome, departamento e e-mail da(s) pessoa(s)</label>
+                        <Textarea 
+                          value={planoSucessoData.detalheTimeInterno}
+                          onChange={(e) => setPlanoSucessoData({...planoSucessoData, detalheTimeInterno: e.target.value})}
+                          placeholder="Ex: João Silva - Financeiro - joao@empresa.com"
+                          className="mt-1"
+                          rows={3}
+                        />
+                      </div>
+                    )}
+                    
+                    <div>
+                      <label className="text-sm font-medium">Qual o contato da antiga contabilidade?</label>
+                      <input 
+                        type="text"
+                        value={planoSucessoData.contatoAntigaContabilidade}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, contatoAntigaContabilidade: e.target.value})}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        placeholder="Nome e telefone da contabilidade anterior"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">A contabilidade já foi comunicada da rescisão contratual? *</label>
+                      <div className="flex gap-4 mt-2">
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="rescisao" 
+                            value="Sim"
+                            checked={planoSucessoData.contabilidadeComunicadaRescisao === 'Sim'}
+                            onChange={(e) => setPlanoSucessoData({...planoSucessoData, contabilidadeComunicadaRescisao: e.target.value})}
+                            className="mr-2"
+                          />
+                          Sim
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="rescisao" 
+                            value="Não"
+                            checked={planoSucessoData.contabilidadeComunicadaRescisao === 'Não'}
+                            onChange={(e) => setPlanoSucessoData({...planoSucessoData, contabilidadeComunicadaRescisao: e.target.value})}
+                            className="mr-2"
+                          />
+                          Não
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Qual o perfil do cliente? Fale um pouco sobre ele *</label>
+                      <Textarea 
+                        value={planoSucessoData.perfilCliente}
+                        onChange={(e) => setPlanoSucessoData({...planoSucessoData, perfilCliente: e.target.value})}
+                        placeholder="Descreva o perfil, personalidade e características do cliente..."
+                        className="mt-1"
+                        rows={4}
                       />
                     </div>
                   </div>
@@ -429,8 +733,31 @@ export function ClienteDetalhePage() {
                   </Button>
                   <Button
                     onClick={() => {
-                      // Aqui implementaremos a lógica de salvar quando você enviar o formulário específico
-                      alert('Plano de Sucesso salvo! (funcionalidade será personalizada)')
+                      // Validação básica
+                      const camposObrigatorios = [
+                        'nomeCliente', 'telefoneEmail', 'dataInicioContrato', 'quantidadeCnpjs',
+                        'cnpjsRegimeTributario', 'foiFeitoPlanejamento', 'motivosTrocaContador',
+                        'sistemaUtilizado', 'clientePossuiRiscos', 'clientePossuiTimeInterno',
+                        'contabilidadeComunicadaRescisao', 'perfilCliente'
+                      ]
+                      
+                      const camposVazios = camposObrigatorios.filter(campo => !planoSucessoData[campo as keyof typeof planoSucessoData])
+                      
+                      if (camposVazios.length > 0) {
+                        alert('Por favor, preencha todos os campos obrigatórios (marcados com *)')
+                        return
+                      }
+                      
+                      // Salvar no localStorage
+                      localStorage.setItem(`planoSucesso_${clientId}`, JSON.stringify(planoSucessoData))
+                      
+                      // Marcar como concluído
+                      const newCompletedStages = [...completedStages, 'plano_sucesso']
+                      setCompletedStages(newCompletedStages)
+                      localStorage.setItem(`completedStages_${clientId}`, JSON.stringify(newCompletedStages))
+                      window.dispatchEvent(new CustomEvent('localStorageChange'))
+                      
+                      alert('Plano de Sucesso salvo com sucesso!')
                       setShowPlanoSucessoModal(false)
                     }}
                     className="bg-orange-600 hover:bg-orange-700"
