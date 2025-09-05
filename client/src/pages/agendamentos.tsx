@@ -9,13 +9,18 @@ import {
   Search,
   CheckCircle2,
   AlertCircle,
-  XCircle
+  XCircle,
+  Building,
+  Mail,
+  Phone,
+  Eye
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Link } from 'wouter'
 import { api } from '@/lib/api'
 import dayjs from '@/lib/dayjs'
 
@@ -71,7 +76,7 @@ export function AgendamentosPage() {
 
   const filteredAppointments = appointments?.filter((appointment: any) => {
     if (searchTerm && !appointment.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !appointment.client?.companyName.toLowerCase().includes(searchTerm.toLowerCase())) {
+        !appointment.cliente?.nome.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false
     }
     return true
@@ -161,30 +166,65 @@ export function AgendamentosPage() {
                     </div>
                     
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-3">
                         <h3 className="text-lg font-semibold">{agendamento.titulo}</h3>
                         <Badge 
                           variant="secondary" 
                           className={getStatusColor(agendamento.status)}
                         >
                           {getStatusIcon(agendamento.status)}
-                          <span className="ml-1">{agendamento.status}</span>
+                          <span className="ml-1">{getStatusLabel(agendamento.status)}</span>
                         </Badge>
                         <Badge variant="outline">{agendamento.tipo}</Badge>
                       </div>
+                      
+                      {/* Informações do Cliente */}
+                      {agendamento.cliente && (
+                        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Building className="h-4 w-4 text-gray-600" />
+                            <span className="font-medium text-gray-900">{agendamento.cliente.nome}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            {agendamento.cliente.cnpj && (
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">CNPJ:</span>
+                                <span>{agendamento.cliente.cnpj}</span>
+                              </div>
+                            )}
+                            
+                            {agendamento.cliente.contato && (
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>{agendamento.cliente.contato}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                            {agendamento.cliente.email && (
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-4 w-4" />
+                                <span>{agendamento.cliente.email}</span>
+                              </div>
+                            )}
+                            
+                            {agendamento.cliente.telefone && (
+                              <div className="flex items-center gap-1">
+                                <Phone className="h-4 w-4" />
+                                <span>{agendamento.cliente.telefone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4" />
                           <span>{dayjs(agendamento.data_agendada).format('DD/MM/YYYY - HH:mm')}</span>
                         </div>
-                        
-                        {agendamento.cliente && (
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            <span>{agendamento.cliente.nome}</span>
-                          </div>
-                        )}
                         
                         {agendamento.google_event_id && (
                           <Badge variant="outline" className="text-xs">
@@ -213,6 +253,15 @@ export function AgendamentosPage() {
                       <Badge className="text-xs bg-blue-500">
                         Hoje
                       </Badge>
+                    )}
+                    
+                    {/* Botão para ver detalhes do cliente */}
+                    {agendamento.cliente && (
+                      <Link href={`/clientes/${agendamento.cliente.id || agendamento.clientId}`}>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
                     )}
                   </div>
                 </div>
