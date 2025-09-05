@@ -168,13 +168,6 @@ export function AgendamentosPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
                         <h3 className="text-lg font-semibold">{agendamento.titulo}</h3>
-                        <Badge 
-                          variant="secondary" 
-                          className={getStatusColor(agendamento.status)}
-                        >
-                          {getStatusIcon(agendamento.status)}
-                          <span className="ml-1">{getStatusLabel(agendamento.status)}</span>
-                        </Badge>
                         <Badge variant="outline">{agendamento.tipo}</Badge>
                       </div>
                       
