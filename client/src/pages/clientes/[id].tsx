@@ -180,6 +180,11 @@ export function ClienteDetalhePage() {
   }
 
   // Calcular etapas obrigatórias de follow-up
+  // Verificar se o Plano de Sucesso foi preenchido
+  const isPlanoSucessoCompleted = () => {
+    return completedStages.includes('plano_sucesso')
+  }
+
   const getFollowUpStages = () => {
     if (!client?.createdAt) return []
     
@@ -770,25 +775,45 @@ export function ClienteDetalhePage() {
           </Dialog>
           
           <div className="grid gap-4">
-            {getFollowUpStages().map((stage, index) => (
-              <Card 
-                key={stage.id} 
-                className={`transition-all hover:shadow-md border-l-4 ${getPriorityColor(stage.priority, stage.isOverdue, stage.isCompleted)}`}
-              >
+            {getFollowUpStages().map((stage, index) => {
+              // Se não for o Plano de Sucesso e o Plano de Sucesso não foi preenchido, desabilitar o card
+              const isDisabled = !stage.isPlanoSucesso && !isPlanoSucessoCompleted()
+              
+              return (
+                <Card 
+                  key={stage.id} 
+                  className={`transition-all border-l-4 ${
+                    isDisabled 
+                      ? 'opacity-50 cursor-not-allowed bg-gray-50' 
+                      : 'hover:shadow-md'
+                  } ${getPriorityColor(stage.priority, stage.isOverdue, stage.isCompleted)}`}
+                >
                 <CardContent className="p-6">
+                  {isDisabled && !stage.isPlanoSucesso && (
+                    <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <p className="text-sm text-orange-700 font-medium">
+                        ⚠️ Esta etapa estará disponível após o preenchimento do "Plano de Sucesso do Cliente"
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
                       <div className="flex-shrink-0">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                          stage.isCompleted 
-                            ? 'bg-orange-100 border-orange-300'
-                            : stage.isOverdue 
-                              ? 'bg-red-100 border-red-300' 
-                              : stage.priority === 'high' 
-                                ? 'bg-orange-50 border-orange-200'
-                                : 'bg-gray-100 border-gray-300'
+                          isDisabled && !stage.isPlanoSucesso
+                            ? 'bg-gray-100 border-gray-300'
+                            : stage.isCompleted 
+                              ? 'bg-orange-100 border-orange-300'
+                              : stage.isOverdue 
+                                ? 'bg-red-100 border-red-300' 
+                                : stage.priority === 'high' 
+                                  ? 'bg-orange-50 border-orange-200'
+                                  : 'bg-gray-100 border-gray-300'
                         } border-2`}>
-                          {stage.isCompleted ? (
+                          {isDisabled && !stage.isPlanoSucesso ? (
+                            <Calendar className="h-6 w-6 text-gray-400" />
+                          ) : stage.isCompleted ? (
                             <CheckCircle2 className="h-6 w-6 text-orange-600" />
                           ) : stage.isOverdue ? (
                             <AlertCircle className="h-6 w-6 text-red-600" />
@@ -866,75 +891,100 @@ export function ClienteDetalhePage() {
                             variant="outline" 
                             size="sm"
                             onClick={() => toggleStageCompletion(stage.id)}
-                            className={stage.isCompleted 
-                              ? "text-gray-600 border-gray-200 hover:bg-gray-50"
-                              : "text-green-600 border-green-200 hover:bg-green-50"
+                            disabled={isDisabled}
+                            className={
+                              isDisabled 
+                                ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                                : stage.isCompleted 
+                                  ? "text-gray-600 border-gray-200 hover:bg-gray-50"
+                                  : "text-green-600 border-green-200 hover:bg-green-50"
                             }
                           >
                             <CheckCircle2 className="mr-2 h-4 w-4" />
                             {stage.isCompleted ? 'Desmarcar' : 'Marcar Concluído'}
                           </Button>
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            disabled={isDisabled}
+                            className={isDisabled ? "text-gray-400 border-gray-200 cursor-not-allowed" : ""}
+                          >
                             <Calendar className="mr-2 h-4 w-4" />
                             Agendar
                           </Button>
                         </>
                       )}
                       
-                      {/* Botão de Anotações */}
-                      <Dialog 
-                        open={openNotesModal === stage.id} 
-                        onOpenChange={(open) => setOpenNotesModal(open ? stage.id : null)}
-                      >
-                        <DialogTrigger asChild>
+                      {/* Botões de Anotações e Upload apenas para etapas que não são Plano de Sucesso */}
+                      {!stage.isPlanoSucesso && (
+                        <>
+                          {/* Botão de Anotações */}
+                          <Dialog 
+                            open={openNotesModal === stage.id} 
+                            onOpenChange={(open) => setOpenNotesModal(open ? stage.id : null)}
+                          >
+                            <DialogTrigger asChild>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                disabled={isDisabled}
+                                className={
+                                  isDisabled 
+                                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                                    : "text-blue-600 border-blue-200 hover:bg-blue-50"
+                                }
+                              >
+                                <StickyNote className="mr-2 h-4 w-4" />
+                                Anotações
+                                {stageNotes[stage.id] && (
+                                  <div className="ml-1 w-2 h-2 bg-blue-500 rounded-full" />
+                                )}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Anotações - {stage.title}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <Textarea
+                                  placeholder="Digite suas anotações para esta etapa..."
+                                  value={stageNotes[stage.id] || ''}
+                                  onChange={(e) => saveStageNote(stage.id, e.target.value)}
+                                  className="min-h-[200px] text-sm"
+                                />
+                                <Button 
+                                  onClick={() => setOpenNotesModal(null)}
+                                  className="w-full"
+                                >
+                                  Salvar e Fechar
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          
+                          {/* Botão de Upload */}
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            onClick={() => handleFileUpload(stage.id)}
+                            disabled={isDisabled}
+                            className={
+                              isDisabled 
+                                ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                                : "text-purple-600 border-purple-200 hover:bg-purple-50"
+                            }
                           >
-                            <StickyNote className="mr-2 h-4 w-4" />
-                            Anotações
-                            {stageNotes[stage.id] && (
-                              <div className="ml-1 w-2 h-2 bg-blue-500 rounded-full" />
-                            )}
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Anotações - {stage.title}</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <Textarea
-                              placeholder="Digite suas anotações para esta etapa..."
-                              value={stageNotes[stage.id] || ''}
-                              onChange={(e) => saveStageNote(stage.id, e.target.value)}
-                              className="min-h-[200px] text-sm"
-                            />
-                            <Button 
-                              onClick={() => setOpenNotesModal(null)}
-                              className="w-full"
-                            >
-                              Salvar e Fechar
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      
-                      {/* Botão de Upload */}
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleFileUpload(stage.id)}
-                        className="text-purple-600 border-purple-200 hover:bg-purple-50"
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload
-                      </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              )
+            })}
           </div>
           
           {/* Resumo das Etapas */}
