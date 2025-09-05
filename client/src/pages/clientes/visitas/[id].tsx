@@ -88,9 +88,10 @@ export function ClienteVisitasPage() {
       
     } catch (error) {
       console.error('Erro ao salvar ATA:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
       toast({
         title: "Erro ao salvar",
-        description: "Ocorreu um erro ao salvar a ATA. Tente novamente.",
+        description: `Ocorreu um erro ao salvar a ATA: ${errorMessage}`,
         variant: "destructive"
       })
     }
