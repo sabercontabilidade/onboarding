@@ -22,7 +22,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { api } from '@/lib/api'
@@ -330,29 +329,8 @@ export function ClienteDetalhePage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="onboarding" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="onboarding" className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Onboarding
-          </TabsTrigger>
-          <TabsTrigger value="agendamentos" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Agendamentos
-          </TabsTrigger>
-          <TabsTrigger value="visitas" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Visitas
-          </TabsTrigger>
-          <TabsTrigger value="dados" className="flex items-center gap-2">
-            <Building className="h-4 w-4" />
-            Dados & Canais
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Tab: Etapas Obrigatórias de Follow-up */}
-        <TabsContent value="onboarding" className="space-y-6">
+      {/* Etapas de Onboarding */}
+      <div className="space-y-6">
           
           {/* Modal de Aviso de Sequência */}
           <Dialog open={showSequenceWarningModal} onOpenChange={setShowSequenceWarningModal}>
@@ -990,17 +968,17 @@ export function ClienteDetalhePage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <div className="text-2xl font-bold text-orange-600">
+                <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="text-2xl font-bold text-gray-600">
                     {getFollowUpStages().filter(s => s.isCompleted).length}
                   </div>
-                  <div className="text-sm text-orange-600 font-medium">Concluídas</div>
+                  <div className="text-sm text-gray-600 font-medium">Concluídas</div>
                 </div>
-                <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
-                  <div className="text-2xl font-bold text-red-600">
+                <div className="text-center p-4 bg-gray-100 rounded-lg border border-gray-300">
+                  <div className="text-2xl font-bold text-gray-700">
                     {getFollowUpStages().filter(s => !s.isCompleted && s.isOverdue).length}
                   </div>
-                  <div className="text-sm text-red-600 font-medium">Atrasadas</div>
+                  <div className="text-sm text-gray-700 font-medium">Atrasadas</div>
                 </div>
                 <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="text-2xl font-bold text-gray-600">
@@ -1011,236 +989,7 @@ export function ClienteDetalhePage() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Tab: Agendamentos */}
-        <TabsContent value="agendamentos" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Agendamentos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {appointments && appointments.length > 0 ? (
-                <div className="space-y-4">
-                  {appointments.map((appointment: any) => (
-                    <div key={appointment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <Calendar className="h-5 w-5 text-orange-500" />
-                        <div>
-                          <p className="font-medium">{appointment.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {dayjs(appointment.scheduledStart).format('DD/MM/YYYY - HH:mm')}
-                          </p>
-                          {appointment.description && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {appointment.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <Badge variant={appointment.status === 'completed' ? 'default' : 'secondary'}>
-                        {appointment.status === 'completed' ? 'Realizado' : 
-                         appointment.status === 'scheduled' ? 'Agendado' : 
-                         appointment.status === 'cancelled' ? 'Cancelado' : appointment.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhum agendamento encontrado
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab: Visitas (ATAs) */}
-        <TabsContent value="visitas" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Visitas Técnicas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {visits && visits.length > 0 ? (
-                <div className="space-y-4">
-                  {visits.map((visita: any) => (
-                    <div key={visita.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{visita.tipo_visita}</h4>
-                          <Badge variant="outline">
-                            {dayjs(visita.data).format('DD/MM/YYYY')}
-                          </Badge>
-                        </div>
-                        {visita.satisfacao && (
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 fill-orange-400 text-orange-400" />
-                            <span className="font-medium">{visita.satisfacao}/10</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {visita.participantes && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Participantes: {visita.participantes}
-                        </p>
-                      )}
-                      
-                      {visita.resumo && (
-                        <p className="text-sm mb-3">{visita.resumo}</p>
-                      )}
-                      
-                      {visita.decisoes && visita.decisoes.length > 0 && (
-                        <div className="mb-3">
-                          <h5 className="text-sm font-medium mb-2">Decisões:</h5>
-                          <ul className="space-y-1">
-                            {visita.decisoes.map((decisao: string, index: number) => (
-                              <li key={index} className="text-sm flex items-start gap-2">
-                                <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                {decisao}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      {visita.pendencias && visita.pendencias.length > 0 && (
-                        <div>
-                          <h5 className="text-sm font-medium mb-2">Pendências:</h5>
-                          <ul className="space-y-1">
-                            {visita.pendencias.map((pendencia: string, index: number) => (
-                              <li key={index} className="text-sm flex items-start gap-2">
-                                <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                                {pendencia}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  Nenhuma visita registrada
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Tab: Dados & Canais */}
-        <TabsContent value="dados" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Dados da Empresa */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building className="h-5 w-5" />
-                  Dados da Empresa
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Razão Social</label>
-                  <p className="font-medium">{client.companyName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">CNPJ</label>
-                  <p className="font-medium">{client.cnpj}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Data de Cadastro</label>
-                  <p className="font-medium">{dayjs(client.createdAt).format('DD/MM/YYYY - HH:mm')}</p>
-                </div>
-                {client.sector && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Setor</label>
-                    <p className="text-sm">{client.sector}</p>
-                  </div>
-                )}
-                {client.notes && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Observações</label>
-                    <p className="text-sm">{client.notes}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Contatos */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Contato Principal
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="p-3 border rounded-lg">
-                  <p className="font-medium">{client.contactName}</p>
-                  <div className="flex flex-col gap-1 mt-2">
-                    {client.contactEmail && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4" />
-                        <span>{client.contactEmail}</span>
-                      </div>
-                    )}
-                    {client.contactPhone && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-4 w-4" />
-                        <span>{client.contactPhone}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Status e Timeline */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Status e Timeline</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Status Atual</label>
-                  <div className="mt-1">
-                    <Badge 
-                      variant="secondary" 
-                      className={getStatusColor(client.status)}
-                    >
-                      {getStatusLabel(client.status)}
-                    </Badge>
-                  </div>
-                </div>
-                
-                {client.currentStage && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Etapa Atual</label>
-                    <div className="mt-1">
-                      <Badge variant="outline">
-                        {client.currentStage.stage}
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-                
-                {client.lastActivity && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Última Atividade</label>
-                    <p className="text-sm mt-1">{client.lastActivity.description}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {dayjs(client.lastActivity.createdAt).format('DD/MM/YYYY - HH:mm')}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
     </div>
   )
 }
