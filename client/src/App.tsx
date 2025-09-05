@@ -10,6 +10,7 @@ import { NovoClientePage } from "@/pages/clientes/novo";
 import { ClienteDetalhePage } from "@/pages/clientes/[id]";
 import { ClienteVisitasPage } from "@/pages/clientes/visitas/[id]";
 import { EditarClientePage } from "@/pages/clientes/editar/[id]";
+import { ClienteAgendamentosPage } from "@/pages/cliente-agendamentos/[id]";
 import { ConfiguracoesPage } from "@/pages/configuracoes";
 import { AgendamentosPage } from "@/pages/agendamentos";
 import { VisitasPage } from "@/pages/visitas";
@@ -27,6 +28,7 @@ function App() {
             <Route path="/clientes/:id" component={ClienteDetalhePage} />
             <Route path="/clientes/:id/visitas" component={ClienteVisitasPage} />
             <Route path="/clientes/:id/editar" component={EditarClientePage} />
+            <Route path="/cliente-agendamentos/:id" component={ClienteAgendamentosPage} />
             <Route path="/onboarding" component={OnboardingPage} />
             <Route path="/agendamentos" component={AgendamentosPage} />
             <Route path="/visitas" component={VisitasPage} />

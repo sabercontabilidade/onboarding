@@ -255,9 +255,9 @@ export function AgendamentosPage() {
                       </Badge>
                     )}
                     
-                    {/* Botão para ver detalhes do cliente */}
+                    {/* Botão para ver agendamentos do cliente */}
                     {agendamento.client && (
-                      <Link href={`/clientes/${agendamento.client.id || agendamento.clientId}`}>
+                      <Link href={`/cliente-agendamentos/${agendamento.client.id || agendamento.clientId}`}>
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
