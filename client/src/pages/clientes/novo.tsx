@@ -17,9 +17,9 @@ import { api, invalidateQueries } from '@/lib/api'
 
 const contatoSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
-  email: z.string().email('E-mail inválido').optional().or(z.literal('')),
-  telefone: z.string().optional(),
-  cargo: z.string().optional(),
+  email: z.string().min(1, 'E-mail é obrigatório').email('E-mail inválido'),
+  telefone: z.string().min(1, 'Telefone é obrigatório'),
+  cargo: z.string().min(1, 'Cargo é obrigatório'),
 })
 
 // Validação de CNPJ
@@ -61,8 +61,8 @@ function formatarCNPJ(value: string): string {
 const clienteSchema = z.object({
   nome: z.string().min(1, 'Nome da empresa é obrigatório'),
   cnpj: z.string().min(1, 'CNPJ é obrigatório').refine(validarCNPJ, 'CNPJ inválido'),
-  data_inicio_contrato: z.string().optional(),
-  contatos_empresa: z.array(contatoSchema).default([]),
+  data_inicio_contrato: z.string().min(1, 'Data de início do contrato é obrigatória'),
+  contatos_empresa: z.array(contatoSchema).min(1, 'Pelo menos um contato é obrigatório'),
   canais: z.array(z.string()).default([]),
   status_onboarding: z.enum(['INICIADO', 'EM_ANDAMENTO', 'CONCLUIDO', 'SUSPENSO']).default('INICIADO'),
   status_relacionamento: z.enum(['PENDENTE', 'ATIVO', 'INATIVO']).default('PENDENTE'),
@@ -150,11 +150,27 @@ export function NovoClientePage() {
   })
 
   const onSubmit = (data: ClienteFormData) => {
-    createClientMutation.mutate(data)
+    // Validar se há pelo menos um contato
+    if (contatos.length === 0) {
+      toast({
+        title: 'Contato obrigatório',
+        description: 'É necessário adicionar pelo menos um contato da empresa.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    // Adicionar contatos ao form data
+    const dataWithContacts = {
+      ...data,
+      contatos_empresa: contatos
+    }
+    
+    createClientMutation.mutate(dataWithContacts)
   }
 
   const adicionarContato = () => {
-    if (novoContato.nome) {
+    if (novoContato.nome && novoContato.email && novoContato.telefone && novoContato.cargo) {
       setContatos([...contatos, novoContato])
       setNovoContato({ nome: '', email: '', telefone: '', cargo: '' })
     }
@@ -311,7 +327,7 @@ export function NovoClientePage() {
                   name="data_inicio_contrato"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Data de Início do Contrato</FormLabel>
+                      <FormLabel>Data de Início do Contrato *</FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
                       </FormControl>
@@ -393,10 +409,18 @@ export function NovoClientePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Contatos da Empresa
+                Contatos da Empresa *
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {contatos.length === 0 && (
+                <div className="p-3 border border-orange-200 bg-orange-50 rounded-lg">
+                  <p className="text-sm text-orange-800">
+                    ⚠️ É obrigatório adicionar pelo menos um contato da empresa com todos os campos preenchidos.
+                  </p>
+                </div>
+              )}
+              
               {/* Lista de contatos */}
               {contatos.length > 0 && (
                 <div className="space-y-2">
@@ -433,18 +457,18 @@ export function NovoClientePage() {
                     onChange={(e) => setNovoContato({...novoContato, nome: e.target.value})}
                   />
                   <Input
-                    placeholder="Cargo"
+                    placeholder="Cargo *"
                     value={novoContato.cargo}
                     onChange={(e) => setNovoContato({...novoContato, cargo: e.target.value})}
                   />
                   <Input
                     type="email"
-                    placeholder="E-mail"
+                    placeholder="E-mail *"
                     value={novoContato.email}
                     onChange={(e) => setNovoContato({...novoContato, email: e.target.value})}
                   />
                   <Input
-                    placeholder="Telefone"
+                    placeholder="Telefone *"
                     value={novoContato.telefone}
                     onChange={(e) => setNovoContato({...novoContato, telefone: e.target.value})}
                   />
@@ -454,7 +478,7 @@ export function NovoClientePage() {
                   variant="outline"
                   size="sm"
                   onClick={adicionarContato}
-                  disabled={!novoContato.nome}
+                  disabled={!novoContato.nome || !novoContato.email || !novoContato.telefone || !novoContato.cargo}
                   className="mt-3"
                 >
                   <Plus className="h-4 w-4 mr-2" />
