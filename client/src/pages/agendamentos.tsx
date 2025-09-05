@@ -187,26 +187,10 @@ export function AgendamentosPage() {
                               </div>
                             )}
                             
-                            {agendamento.client.contactName && (
+                            {agendamento.client.createdAt && (
                               <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                <span>{agendamento.client.contactName}</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            {agendamento.client.contactEmail && (
-                              <div className="flex items-center gap-1">
-                                <Mail className="h-4 w-4" />
-                                <span>{agendamento.client.contactEmail}</span>
-                              </div>
-                            )}
-                            
-                            {agendamento.client.contactPhone && (
-                              <div className="flex items-center gap-1">
-                                <Phone className="h-4 w-4" />
-                                <span>{agendamento.client.contactPhone}</span>
+                                <span className="font-medium">Cliente desde:</span>
+                                <span>{dayjs(agendamento.client.createdAt).format('DD/MM/YYYY')}</span>
                               </div>
                             )}
                           </div>

@@ -144,28 +144,6 @@ export function ClientesPage() {
                             <span>{dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
                           </div>
                         )}
-                        
-                        {client.contactName && (
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            <span>{client.contactName}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                        {client.contactEmail && (
-                          <div className="flex items-center gap-1">
-                            <Mail className="h-4 w-4" />
-                            <span>{client.contactEmail}</span>
-                          </div>
-                        )}
-                        {client.contactPhone && (
-                          <div className="flex items-center gap-1">
-                            <Phone className="h-4 w-4" />
-                            <span>{client.contactPhone}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>

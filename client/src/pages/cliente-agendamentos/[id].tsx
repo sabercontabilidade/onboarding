@@ -163,46 +163,21 @@ export function ClienteAgendamentosPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <div>
-                <span className="font-medium text-gray-900">{client.companyName}</span>
-              </div>
-              
-              {client.cnpj && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="font-medium">CNPJ:</span>
-                  <span>{client.cnpj}</span>
-                </div>
-              )}
-              
-              {client.contactName && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>{client.contactName}</span>
-                </div>
-              )}
+          <div className="space-y-3">
+            <div>
+              <span className="font-medium text-gray-900">{client.companyName}</span>
             </div>
             
-            <div className="space-y-3">
-              {client.contactEmail && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  <span>{client.contactEmail}</span>
-                </div>
-              )}
-              
-              {client.contactPhone && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  <span>{client.contactPhone}</span>
-                </div>
-              )}
-              
+            {client.cnpj && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>Cliente desde {dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
+                <span className="font-medium">CNPJ:</span>
+                <span>{client.cnpj}</span>
               </div>
+            )}
+            
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>Cliente desde {dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
             </div>
           </div>
         </CardContent>

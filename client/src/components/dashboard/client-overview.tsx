@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ClientWithDetails } from "@shared/schema";
+import dayjs from '@/lib/dayjs';
 
 export default function ClientOverview() {
   const { data: clients, isLoading } = useQuery<ClientWithDetails[]>({
@@ -130,7 +131,8 @@ export default function ClientOverview() {
                         </div>
                         <div>
                           <p className="font-medium text-foreground" data-testid={`client-company-${client.id}`}>{client.companyName}</p>
-                          <p className="text-xs text-muted-foreground" data-testid={`client-email-${client.id}`}>{client.contactEmail}</p>
+                          <p className="text-xs text-muted-foreground" data-testid={`client-cnpj-${client.id}`}>{client.cnpj}</p>
+                          <p className="text-xs text-muted-foreground" data-testid={`client-created-${client.id}`}>Cliente desde {dayjs(client.createdAt).format('DD/MM/YYYY')}</p>
                         </div>
                       </div>
                     </td>
