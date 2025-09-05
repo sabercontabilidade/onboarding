@@ -70,7 +70,7 @@ export function VisitasPage() {
   // Buscar visitas da API
   const { data: allVisits } = useQuery({
     queryKey: ['/api/visits'],
-    queryFn: () => api.visits?.list() || [],
+    queryFn: () => [],
     initialData: []
   })
 

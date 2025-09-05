@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertClientSchema, insertAppointmentSchema } from "@shared/schema";
+import { insertClientSchema, insertAppointmentSchema, insertVisitSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard routes
@@ -160,6 +160,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(integrations);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch integrations" });
+    }
+  });
+
+  // Visit routes
+  app.get("/api/visits", async (req, res) => {
+    try {
+      const visits = await storage.getVisits();
+      res.json(visits);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch visits" });
+    }
+  });
+
+  app.get("/api/clients/:id/visits", async (req, res) => {
+    try {
+      const visits = await storage.getVisits(req.params.id);
+      res.json(visits);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch client visits" });
+    }
+  });
+
+  app.post("/api/visits", async (req, res) => {
+    try {
+      const visitData = insertVisitSchema.parse(req.body);
+      const visit = await storage.createVisit(visitData);
+      res.status(201).json(visit);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid visit data" });
+    }
+  });
+
+  app.put("/api/visits/:id", async (req, res) => {
+    try {
+      const updates = insertVisitSchema.partial().parse(req.body);
+      const visit = await storage.updateVisit(req.params.id, updates);
+      res.json(visit);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update visit" });
+    }
+  });
+
+  app.delete("/api/visits/:id", async (req, res) => {
+    try {
+      await storage.deleteVisit(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ error: "Failed to delete visit" });
     }
   });
 

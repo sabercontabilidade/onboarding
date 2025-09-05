@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { api } from '@/lib/api'
+import { queryClient } from '@/lib/queryClient'
 import dayjs from '@/lib/dayjs'
 
 export function ClienteVisitasPage() {
@@ -48,7 +49,7 @@ export function ClienteVisitasPage() {
     initialData: []
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.data || !formData.participantes || !formData.descricao) {
@@ -60,17 +61,39 @@ export function ClienteVisitasPage() {
       return
     }
 
-    // Aqui seria feita a chamada para API para salvar a visita
-    console.log('Nova visita:', { clientId, ...formData })
-    
-    toast({
-      title: "Visita registrada",
-      description: "A nova visita foi registrada com sucesso.",
-    })
-    
-    // Limpar formulário e fechar modal
-    setFormData({ data: '', participantes: '', descricao: '' })
-    setShowNewVisitModal(false)
+    try {
+      // Criar nova visita/ATA
+      const visitData = {
+        clientId: clientId,
+        date: formData.data,
+        participants: formData.participantes,
+        description: formData.descricao,
+        type: 'technical_visit',
+        status: 'completed'
+      }
+
+      await api.visits.create(visitData)
+      
+      // Invalidar cache para recarregar a lista
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}/visits`] })
+      
+      toast({
+        title: "ATA registrada",
+        description: "A nova ATA foi registrada com sucesso.",
+      })
+      
+      // Limpar formulário e fechar modal
+      setFormData({ data: '', participantes: '', descricao: '' })
+      setShowNewVisitModal(false)
+      
+    } catch (error) {
+      console.error('Erro ao salvar ATA:', error)
+      toast({
+        title: "Erro ao salvar",
+        description: "Ocorreu um erro ao salvar a ATA. Tente novamente.",
+        variant: "destructive"
+      })
+    }
   }
 
   const getStarRating = (rating: number) => {

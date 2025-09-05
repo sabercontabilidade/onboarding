@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Client, type InsertClient, type OnboardingStage, type InsertOnboardingStage, type Appointment, type InsertAppointment, type Activity, type InsertActivity, type Integration, type InsertIntegration, type ClientWithDetails, type AppointmentWithDetails, type ActivityWithDetails, type DashboardMetrics } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type OnboardingStage, type InsertOnboardingStage, type Appointment, type InsertAppointment, type Activity, type InsertActivity, type Integration, type InsertIntegration, type Visit, type InsertVisit, type ClientWithDetails, type AppointmentWithDetails, type ActivityWithDetails, type DashboardMetrics } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -41,6 +41,12 @@ export interface IStorage {
   createIntegration(integration: InsertIntegration): Promise<Integration>;
   updateIntegration(id: string, updates: Partial<InsertIntegration>): Promise<Integration>;
 
+  // Visit methods
+  getVisits(clientId?: string): Promise<Visit[]>;
+  createVisit(visit: InsertVisit): Promise<Visit>;
+  updateVisit(id: string, updates: Partial<InsertVisit>): Promise<Visit>;
+  deleteVisit(id: string): Promise<void>;
+
   // Dashboard methods
   getDashboardMetrics(): Promise<DashboardMetrics>;
 }
@@ -52,6 +58,7 @@ export class MemStorage implements IStorage {
   private appointments: Map<string, Appointment> = new Map();
   private activities: Map<string, Activity> = new Map();
   private integrations: Map<string, Integration> = new Map();
+  private visits: Map<string, Visit> = new Map();
 
   constructor() {
     // Initialize with a default user
@@ -364,6 +371,48 @@ export class MemStorage implements IStorage {
     const updated: Integration = { ...integration, ...updates };
     this.integrations.set(id, updated);
     return updated;
+  }
+
+  async getVisits(clientId?: string): Promise<Visit[]> {
+    const visits = Array.from(this.visits.values());
+    return clientId ? visits.filter(v => v.clientId === clientId) : visits;
+  }
+
+  async createVisit(insertVisit: InsertVisit): Promise<Visit> {
+    const id = randomUUID();
+    const visit: Visit = {
+      ...insertVisit,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.visits.set(id, visit);
+
+    // Create activity
+    const client = this.clients.get(insertVisit.clientId);
+    if (client) {
+      await this.createActivity({
+        clientId: insertVisit.clientId,
+        userId: "user-1",
+        type: "visit_completed",
+        description: `ATA de visita registrada para ${client.companyName}`,
+      });
+    }
+
+    return visit;
+  }
+
+  async updateVisit(id: string, updates: Partial<InsertVisit>): Promise<Visit> {
+    const visit = this.visits.get(id);
+    if (!visit) throw new Error("Visit not found");
+
+    const updated: Visit = { ...visit, ...updates, updatedAt: new Date() };
+    this.visits.set(id, updated);
+    return updated;
+  }
+
+  async deleteVisit(id: string): Promise<void> {
+    this.visits.delete(id);
   }
 
   async getDashboardMetrics(): Promise<DashboardMetrics> {

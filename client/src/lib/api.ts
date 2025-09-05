@@ -104,14 +104,17 @@ export const api = {
 
   // Visitas
   visits: {
+    list: () =>
+      apiRequest<any[]>('/visits'),
+      
     create: (data: any) =>
-      apiRequest<any>('/visitas', {
+      apiRequest<any>('/visits', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
     
     update: (id: number, data: any) =>
-      apiRequest<any>(`/visitas/${id}`, {
+      apiRequest<any>(`/visits/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
       }),

@@ -65,6 +65,24 @@ export const activities = pgTable("activities", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const visits = pgTable("visits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
+  participants: text("participants").notNull(),
+  description: text("description").notNull(),
+  type: text("type").notNull().default("technical_visit"), // technical_visit, maintenance, training, etc.
+  status: text("status").notNull().default("completed"), // scheduled, completed, cancelled
+  location: text("location"),
+  decisions: json("decisions"),
+  pending_actions: json("pending_actions"),
+  satisfaction_rating: integer("satisfaction_rating"),
+  attachments: json("attachments"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const integrations = pgTable("integrations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -125,6 +143,14 @@ export type Activity = typeof activities.$inferSelect;
 
 export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
 export type Integration = typeof integrations.$inferSelect;
+
+export const insertVisitSchema = createInsertSchema(visits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertVisit = z.infer<typeof insertVisitSchema>;
+export type Visit = typeof visits.$inferSelect;
 
 // Extended types for frontend
 export type ClientWithDetails = Client & {
