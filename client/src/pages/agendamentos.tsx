@@ -76,7 +76,7 @@ export function AgendamentosPage() {
 
   const filteredAppointments = appointments?.filter((appointment: any) => {
     if (searchTerm && !appointment.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !appointment.cliente?.nome.toLowerCase().includes(searchTerm.toLowerCase())) {
+        !appointment.client?.companyName.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false
     }
     return true
@@ -179,41 +179,41 @@ export function AgendamentosPage() {
                       </div>
                       
                       {/* Informações do Cliente */}
-                      {agendamento.cliente && (
+                      {agendamento.client && (
                         <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                           <div className="flex items-center gap-2 mb-2">
                             <Building className="h-4 w-4 text-gray-600" />
-                            <span className="font-medium text-gray-900">{agendamento.cliente.nome}</span>
+                            <span className="font-medium text-gray-900">{agendamento.client.companyName}</span>
                           </div>
                           
                           <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            {agendamento.cliente.cnpj && (
+                            {agendamento.client.cnpj && (
                               <div className="flex items-center gap-1">
                                 <span className="font-medium">CNPJ:</span>
-                                <span>{agendamento.cliente.cnpj}</span>
+                                <span>{agendamento.client.cnpj}</span>
                               </div>
                             )}
                             
-                            {agendamento.cliente.contato && (
+                            {agendamento.client.contactName && (
                               <div className="flex items-center gap-1">
                                 <Users className="h-4 w-4" />
-                                <span>{agendamento.cliente.contato}</span>
+                                <span>{agendamento.client.contactName}</span>
                               </div>
                             )}
                           </div>
                           
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            {agendamento.cliente.email && (
+                            {agendamento.client.contactEmail && (
                               <div className="flex items-center gap-1">
                                 <Mail className="h-4 w-4" />
-                                <span>{agendamento.cliente.email}</span>
+                                <span>{agendamento.client.contactEmail}</span>
                               </div>
                             )}
                             
-                            {agendamento.cliente.telefone && (
+                            {agendamento.client.contactPhone && (
                               <div className="flex items-center gap-1">
                                 <Phone className="h-4 w-4" />
-                                <span>{agendamento.cliente.telefone}</span>
+                                <span>{agendamento.client.contactPhone}</span>
                               </div>
                             )}
                           </div>
@@ -256,8 +256,8 @@ export function AgendamentosPage() {
                     )}
                     
                     {/* Botão para ver detalhes do cliente */}
-                    {agendamento.cliente && (
-                      <Link href={`/clientes/${agendamento.cliente.id || agendamento.clientId}`}>
+                    {agendamento.client && (
+                      <Link href={`/clientes/${agendamento.client.id || agendamento.clientId}`}>
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
