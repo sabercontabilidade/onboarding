@@ -115,7 +115,7 @@ export function Dashboard() {
                   </div>
                 ))}
               </div>
-            ) : upcomingContacts?.length > 0 ? (
+            ) : upcomingContacts && upcomingContacts.length > 0 ? (
               <div className="space-y-4">
                 {upcomingContacts.slice(0, 5).map((agendamento: any) => (
                   <div key={agendamento.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -155,7 +155,7 @@ export function Dashboard() {
                   </div>
                 ))}
               </div>
-            ) : overdueAppointments?.length > 0 ? (
+            ) : overdueAppointments && overdueAppointments.length > 0 ? (
               <div className="space-y-4">
                 {overdueAppointments.slice(0, 5).map((agendamento: any) => (
                   <div key={agendamento.id} className="flex items-center justify-between p-3 border border-orange-200 rounded-lg bg-orange-50">

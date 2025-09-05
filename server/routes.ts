@@ -218,6 +218,134 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard relacionamento routes
+  app.get("/api/relacionamento/metricas", async (req, res) => {
+    try {
+      const clients = await storage.getClients();
+      const appointments = await storage.getAppointments();
+      const visits = await storage.getVisits();
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      // Calcular métricas
+      const totalClientes = clients.length;
+      const clientesAtivos = clients.filter((c: any) => c.status === 'active' || c.status === 'onboarding').length;
+      
+      const reunioesToday = appointments.filter((apt: any) => {
+        const aptDate = new Date(apt.scheduledStart);
+        aptDate.setHours(0, 0, 0, 0);
+        return aptDate.getTime() === today.getTime();
+      }).length;
+      
+      // Satisfação média das últimas visitas
+      const recentVisits = visits.filter((v: any) => v.satisfaction_rating).slice(-10);
+      const satisfacaoMedia = recentVisits.length > 0 
+        ? (recentVisits.reduce((acc: number, v: any) => acc + (v.satisfaction_rating || 0), 0) / recentVisits.length).toFixed(1)
+        : null;
+      
+      res.json({
+        resumo: {
+          total_clientes: totalClientes,
+          clientes_ativos: clientesAtivos,
+          satisfacao_media: satisfacaoMedia
+        },
+        hoje: {
+          reunioes_hoje: reunioesToday
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching dashboard metrics:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard metrics" });
+    }
+  });
+
+  app.get("/api/relacionamento/proximos-contatos", async (req, res) => {
+    try {
+      const appointments = await storage.getAppointments();
+      const clients = await storage.getClients();
+      
+      const now = new Date();
+      const upcomingAppointments = appointments
+        .filter((apt: any) => new Date(apt.scheduledStart) > now && apt.status === 'scheduled')
+        .sort((a: any, b: any) => new Date(a.scheduledStart).getTime() - new Date(b.scheduledStart).getTime())
+        .slice(0, 10)
+        .map((apt: any) => {
+          const client = clients.find((c: any) => c.id === apt.clientId);
+          return {
+            id: apt.id,
+            titulo: apt.title || `Reunião com ${client?.companyName || 'Cliente'}`,
+            data_agendada: apt.scheduledStart,
+            tipo: apt.type,
+            cliente: client
+          };
+        });
+      
+      res.json(upcomingAppointments);
+    } catch (error) {
+      console.error("Error fetching upcoming contacts:", error);
+      res.status(500).json({ error: "Failed to fetch upcoming contacts" });
+    }
+  });
+
+  app.get("/api/relacionamento/agendamentos-atrasados", async (req, res) => {
+    try {
+      const appointments = await storage.getAppointments();
+      const clients = await storage.getClients();
+      
+      const now = new Date();
+      const overdueAppointments = appointments
+        .filter((apt: any) => new Date(apt.scheduledStart) < now && apt.status === 'scheduled')
+        .sort((a: any, b: any) => new Date(a.scheduledStart).getTime() - new Date(b.scheduledStart).getTime())
+        .slice(0, 10)
+        .map((apt: any) => {
+          const client = clients.find((c: any) => c.id === apt.clientId);
+          return {
+            id: apt.id,
+            titulo: apt.title || `Reunião com ${client?.companyName || 'Cliente'}`,
+            data_agendada: apt.scheduledStart,
+            tipo: apt.type,
+            cliente: client
+          };
+        });
+      
+      res.json(overdueAppointments);
+    } catch (error) {
+      console.error("Error fetching overdue appointments:", error);
+      res.status(500).json({ error: "Failed to fetch overdue appointments" });
+    }
+  });
+
+  app.get("/api/relacionamento/visitas-recentes", async (req, res) => {
+    try {
+      const visits = await storage.getVisits();
+      const clients = await storage.getClients();
+      
+      const recentVisits = visits
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5)
+        .map((visit: any) => {
+          const client = clients.find((c: any) => c.id === visit.clientId);
+          return {
+            id: visit.id,
+            data: visit.date,
+            tipo_visita: visit.type,
+            satisfacao: visit.satisfaction_rating || 0,
+            cliente: {
+              nome: client?.companyName || 'Cliente'
+            }
+          };
+        });
+      
+      res.json(recentVisits);
+    } catch (error) {
+      console.error("Error fetching recent visits:", error);
+      res.status(500).json({ error: "Failed to fetch recent visits" });
+    }
+  });
+
   // CNPJ lookup route
   app.get("/api/cnpj/:cnpj", async (req, res) => {
     try {
