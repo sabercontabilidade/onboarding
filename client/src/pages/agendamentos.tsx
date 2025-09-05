@@ -226,11 +226,6 @@ export function AgendamentosPage() {
                       </Badge>
                     )}
                     
-                    {dayjs(agendamento.data_agendada).isSame(dayjs(), 'day') && (
-                      <Badge className="text-xs bg-blue-500">
-                        Hoje
-                      </Badge>
-                    )}
                     
                     {/* Botão para ver agendamentos do cliente */}
                     {agendamento.client && (
