@@ -40,43 +40,13 @@ export function ClienteVisitasPage() {
     enabled: !!clientId,
   })
 
-  // Mock data para visitas - em uma aplicação real, isso viria da API
-  const mockVisitas = [
-    {
-      id: 1,
-      clienteId: clientId,
-      data: '2024-01-15',
-      participantes: 'João Silva, Maria Santos',
-      descricao: 'Reunião para implementação do novo sistema contábil. Foram discutidos os requisitos técnicos e definido cronograma de implantação. Cliente demonstrou interesse em módulos adicionais.',
-      status: 'concluida',
-      satisfacao: 9,
-      decisoes: [
-        'Aprovado cronograma de 3 meses para implementação',
-        'Definido treinamento da equipe para março'
-      ],
-      pendencias: [
-        'Enviar documentação técnica',
-        'Agendar próxima reunião'
-      ]
-    },
-    {
-      id: 2,
-      clienteId: clientId,
-      data: '2024-01-25',
-      participantes: 'Ana Costa, Pedro Lima',
-      descricao: 'Follow-up da implementação. Verificação do progresso de migração de dados e ajustes necessários nos relatórios personalizados.',
-      status: 'concluida', 
-      satisfacao: 8,
-      decisoes: [
-        'Migração 80% concluída',
-        'Ajustes nos relatórios personalizados aprovados'
-      ],
-      pendencias: [
-        'Finalizar migração até fim do mês',
-        'Validar relatórios com equipe cliente'
-      ]
-    }
-  ]
+  // Buscar visitas do cliente da API
+  const { data: clientVisits, isLoading: isLoadingVisits } = useQuery({
+    queryKey: [`/api/clients/${clientId}/visits`],
+    queryFn: () => api.clients.visits(clientId!),
+    enabled: !!clientId,
+    initialData: []
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -159,7 +129,7 @@ export function ClienteVisitasPage() {
         </div>
         <Button onClick={() => setShowNewVisitModal(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Nova Visita
+          Nova ATA
         </Button>
       </div>
 
@@ -186,11 +156,11 @@ export function ClienteVisitasPage() {
 
       {/* Lista de Visitas */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Histórico de Visitas ({mockVisitas.length})</h2>
+        <h2 className="text-xl font-semibold">ATAs de Visitas ({clientVisits.length})</h2>
         
-        {mockVisitas.length > 0 ? (
+        {clientVisits.length > 0 ? (
           <div className="grid gap-6">
-            {mockVisitas.map((visita: any) => (
+            {clientVisits.map((visita: any) => (
               <Card key={visita.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -200,25 +170,27 @@ export function ClienteVisitasPage() {
                       </div>
                       <div>
                         <CardTitle className="text-lg">
-                          Visita - {dayjs(visita.data).format('DD/MM/YYYY')}
+                          ATA - {dayjs(visita.scheduledStart || visita.date).format('DD/MM/YYYY')}
                         </CardTitle>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge variant="outline" className="bg-green-50 text-green-600">
                             Concluída
                           </Badge>
                           <span className="text-sm text-muted-foreground">
-                            {dayjs(visita.data).format('dddd, DD [de] MMMM [de] YYYY')}
+                            {dayjs(visita.scheduledStart || visita.date).format('dddd, DD [de] MMMM [de] YYYY')}
                           </span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        {getStarRating(visita.satisfacao)}
+                    {visita.satisfacao && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          {getStarRating(visita.satisfacao)}
+                        </div>
+                        <span className="font-medium">{visita.satisfacao}/10</span>
                       </div>
-                      <span className="font-medium">{visita.satisfacao}/10</span>
-                    </div>
+                    )}
                   </div>
                 </CardHeader>
                 
@@ -228,14 +200,14 @@ export function ClienteVisitasPage() {
                     <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <div>
                       <p className="text-sm font-medium">Participantes</p>
-                      <p className="text-sm text-muted-foreground">{visita.participantes}</p>
+                      <p className="text-sm text-muted-foreground">{visita.participantes || visita.participants}</p>
                     </div>
                   </div>
 
                   {/* Descrição */}
                   <div>
-                    <p className="text-sm font-medium mb-1">Descrição da Visita</p>
-                    <p className="text-sm text-muted-foreground">{visita.descricao}</p>
+                    <p className="text-sm font-medium mb-1">Descrição da ATA</p>
+                    <p className="text-sm text-muted-foreground">{visita.descricao || visita.description}</p>
                   </div>
 
                   {/* Decisões */}
@@ -281,13 +253,13 @@ export function ClienteVisitasPage() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhuma visita registrada</h3>
+              <h3 className="text-lg font-medium mb-2">Nenhuma ATA registrada</h3>
               <p className="text-muted-foreground text-center mb-4">
-                Registre a primeira visita técnica para este cliente.
+                Registre a primeira ATA de visita técnica para este cliente.
               </p>
               <Button onClick={() => setShowNewVisitModal(true)}>
                 <Plus className="mr-2 h-4 w-4" />
-                Registrar Primeira Visita
+                Nova ATA
               </Button>
             </CardContent>
           </Card>
@@ -298,7 +270,7 @@ export function ClienteVisitasPage() {
       <Dialog open={showNewVisitModal} onOpenChange={setShowNewVisitModal}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova Visita Técnica</DialogTitle>
+            <DialogTitle>Nova ATA de Visita Técnica</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
@@ -345,7 +317,7 @@ export function ClienteVisitasPage() {
                 Cancelar
               </Button>
               <Button type="submit">
-                Registrar Visita
+                Salvar ATA
               </Button>
             </div>
           </form>
