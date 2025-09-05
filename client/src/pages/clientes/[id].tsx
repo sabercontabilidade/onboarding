@@ -50,6 +50,9 @@ export function ClienteDetalhePage() {
   // Estado para controlar aviso de etapas anteriores
   const [showSequenceWarningModal, setShowSequenceWarningModal] = useState<boolean>(false)
   
+  // Estado para controlar modal do Plano de Sucesso
+  const [showPlanoSucessoModal, setShowPlanoSucessoModal] = useState<boolean>(false)
+  
   const { data: client, isLoading } = useQuery({
     queryKey: ['/api/clients', clientId],
     queryFn: () => api.clients.get(clientId),
@@ -67,7 +70,7 @@ export function ClienteDetalhePage() {
   
   // Função para marcar/desmarcar etapa como concluída
   const toggleStageCompletion = (stageId: string) => {
-    const stageOrder = ['inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
+    const stageOrder = ['plano_sucesso', 'inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
     const currentIndex = stageOrder.indexOf(stageId)
     
     // Se está desmarcando, permite sempre
@@ -159,6 +162,16 @@ export function ClienteDetalhePage() {
     const today = dayjs()
     
     const stages = [
+      {
+        id: 'plano_sucesso',
+        title: 'Plano de Sucesso do Cliente',
+        description: 'Preencher plano de sucesso para definir objetivos e expectativas do cliente',
+        targetDate: createdDate,
+        isOverdue: false,
+        priority: 'high' as const,
+        isCompleted: completedStages.includes('plano_sucesso'),
+        isPlanoSucesso: true
+      },
       {
         id: 'inicial',
         title: 'Follow-up da Reunião Inicial',
@@ -335,6 +348,99 @@ export function ClienteDetalhePage() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Modal do Plano de Sucesso do Cliente */}
+          <Dialog open={showPlanoSucessoModal} onOpenChange={setShowPlanoSucessoModal}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold text-orange-600">
+                  Plano de Sucesso do Cliente
+                </DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  Preencha as informações para definir os objetivos e expectativas do cliente
+                </p>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
+                {/* Informações do Cliente */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-medium text-sm text-gray-700 mb-2">Cliente:</h3>
+                  <p className="font-semibold">{client?.companyName}</p>
+                  <p className="text-sm text-muted-foreground">{client?.contactName}</p>
+                </div>
+
+                {/* Formulário - Estrutura básica que será personalizada */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Objetivos Principais</label>
+                      <Textarea 
+                        placeholder="Descreva os principais objetivos do cliente..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Expectativas</label>
+                      <Textarea 
+                        placeholder="Quais são as expectativas do cliente..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Desafios Identificados</label>
+                      <Textarea 
+                        placeholder="Principais desafios e pontos de atenção..."
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Estratégia de Sucesso</label>
+                      <Textarea 
+                        placeholder="Como garantir o sucesso deste cliente..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Marcos e Metas</label>
+                      <Textarea 
+                        placeholder="Defina marcos importantes e metas..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Observações</label>
+                      <Textarea 
+                        placeholder="Outras observações importantes..."
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botões */}
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPlanoSucessoModal(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Aqui implementaremos a lógica de salvar quando você enviar o formulário específico
+                      alert('Plano de Sucesso salvo! (funcionalidade será personalizada)')
+                      setShowPlanoSucessoModal(false)
+                    }}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    Salvar Plano
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           
           <div className="grid gap-4">
             {getFollowUpStages().map((stage, index) => (
@@ -417,22 +523,36 @@ export function ClienteDetalhePage() {
                     </div>
                     
                     <div className="flex gap-2 flex-wrap">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => toggleStageCompletion(stage.id)}
-                        className={stage.isCompleted 
-                          ? "text-gray-600 border-gray-200 hover:bg-gray-50"
-                          : "text-green-600 border-green-200 hover:bg-green-50"
-                        }
-                      >
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        {stage.isCompleted ? 'Desmarcar' : 'Marcar Concluído'}
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Agendar
-                      </Button>
+                      {stage.isPlanoSucesso ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowPlanoSucessoModal(true)}
+                          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                        >
+                          <FileText className="mr-2 h-4 w-4" />
+                          Preencher
+                        </Button>
+                      ) : (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => toggleStageCompletion(stage.id)}
+                            className={stage.isCompleted 
+                              ? "text-gray-600 border-gray-200 hover:bg-gray-50"
+                              : "text-green-600 border-green-200 hover:bg-green-50"
+                            }
+                          >
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            {stage.isCompleted ? 'Desmarcar' : 'Marcar Concluído'}
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            Agendar
+                          </Button>
+                        </>
+                      )}
                       
                       {/* Botão de Anotações */}
                       <Dialog 

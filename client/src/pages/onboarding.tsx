@@ -48,7 +48,7 @@ export function OnboardingPage() {
 
   const getFollowUpProgress = (client: any) => {
     // Buscar etapas concluídas do localStorage
-    const followUpStages = ['inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
+    const followUpStages = ['plano_sucesso', 'inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
     const completedStagesKey = `completedStages_${client.id}`
     const completedStagesStr = localStorage.getItem(completedStagesKey) || '[]'
     const completedStages = JSON.parse(completedStagesStr)
