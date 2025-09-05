@@ -28,13 +28,13 @@ export function ClienteAgendamentosPage() {
 
   const { data: client, isLoading: isLoadingClient } = useQuery({
     queryKey: ['/api/clients', clientId],
-    queryFn: () => clientId ? api.clients.getById(clientId) : null,
+    queryFn: () => clientId ? api.clients.get(clientId) : null,
     enabled: !!clientId,
   })
 
   const { data: appointments, isLoading: isLoadingAppointments } = useQuery({
     queryKey: ['/api/clients', clientId, 'appointments'],
-    queryFn: () => clientId ? api.clients.getAppointments(clientId) : null,
+    queryFn: () => clientId ? api.clients.appointments(clientId) : null,
     enabled: !!clientId,
   })
 
