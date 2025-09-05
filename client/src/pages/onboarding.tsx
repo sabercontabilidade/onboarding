@@ -110,66 +110,66 @@ export function OnboardingPage() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="relative overflow-hidden bg-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-gray-100">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Total em Onboarding</p>
-                <p className="text-3xl font-bold text-gray-900">{onboardingClients.length}</p>
-              </div>
-              <div className="h-12 w-12 bg-gray-50 rounded-xl flex items-center justify-center">
-                <UserPlus className="h-6 w-6 text-gray-600" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+              <div className="ml-2">
+                <p className="text-sm font-medium text-muted-foreground">Total em Onboarding</p>
+                <div className="flex items-center">
+                  <span className="text-2xl font-bold">{onboardingClients.length}</span>
+                </div>
               </div>
             </div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gray-50/30 rounded-full -translate-y-12 translate-x-12"></div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden bg-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-gray-100">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Em Andamento</p>
-                <p className="text-3xl font-bold text-gray-900">{getOnboardingInProgress()}</p>
-              </div>
-              <div className="h-12 w-12 bg-gray-50 rounded-xl flex items-center justify-center">
-                <Clock className="h-6 w-6 text-gray-600" />
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <div className="ml-2">
+                <p className="text-sm font-medium text-muted-foreground">Onboarding em Andamento</p>
+                <div className="flex items-center">
+                  <span className="text-2xl font-bold">
+                    {getOnboardingInProgress()}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gray-50/30 rounded-full -translate-y-12 translate-x-12"></div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden bg-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-gray-100">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Finalizados</p>
-                <p className="text-3xl font-bold text-gray-900">{getOnboardingCompleted()}</p>
-              </div>
-              <div className="h-12 w-12 bg-gray-50 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-gray-600" />
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              <div className="ml-2">
+                <p className="text-sm font-medium text-muted-foreground">Onboarding Finalizados</p>
+                <div className="flex items-center">
+                  <span className="text-2xl font-bold">
+                    {getOnboardingCompleted()}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gray-50/30 rounded-full -translate-y-12 translate-x-12"></div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden bg-white hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border border-gray-100">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Em Revisão</p>
-                <p className="text-3xl font-bold text-gray-900">
-                  {onboardingClients.filter(c => c.currentStage?.stage === 'review').length}
-                </p>
-              </div>
-              <div className="h-12 w-12 bg-gray-50 rounded-xl flex items-center justify-center">
-                <FileText className="h-6 w-6 text-gray-600" />
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center">
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+              <div className="ml-2">
+                <p className="text-sm font-medium text-muted-foreground">Revisão</p>
+                <div className="flex items-center">
+                  <span className="text-2xl font-bold">
+                    {onboardingClients.filter(c => c.currentStage?.stage === 'review').length}
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gray-50/30 rounded-full -translate-y-12 translate-x-12"></div>
           </CardContent>
         </Card>
       </div>
@@ -193,120 +193,68 @@ export function OnboardingPage() {
           ))}
         </div>
       ) : onboardingClients.length > 0 ? (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {onboardingClients.map((client: any) => (
-            <Card 
-              key={client.id} 
-              className="group relative overflow-hidden bg-white hover:shadow-xl transition-all duration-300 hover:scale-[1.01] border border-gray-100"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-50/30 to-gray-25/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
-              <CardContent className="p-8 relative">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-6 flex-1">
-                    {/* Avatar moderno */}
-                    <div className="relative">
-                      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                        <Building className="h-8 w-8 text-gray-600" />
-                      </div>
-                      {/* Indicador de progresso no avatar */}
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-gray-200">
-                        <span className="text-xs font-bold text-gray-700">
-                          {Math.round(getFollowUpProgress(client))}%
-                        </span>
-                      </div>
+            <Card key={client.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 flex-1">
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <Building className="h-6 w-6 text-primary" />
                     </div>
                     
-                    <div className="flex-1 space-y-4">
-                      {/* Header */}
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-gray-800 transition-colors">
-                            {client.companyName}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            {client.currentStage && (
-                              <Badge 
-                                variant="outline"
-                                className="border-gray-200 text-gray-700 bg-gray-50 font-medium px-3 py-1"
-                              >
-                                {getStageLabel(client.currentStage.stage)}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <h3 className="text-lg font-semibold">{client.companyName}</h3>
+                        {client.currentStage && (
+                          <Badge 
+                            variant="secondary" 
+                            className={getStageColor(client.currentStage.status)}
+                          >
+                            {getStageLabel(client.currentStage.stage)}
+                          </Badge>
+                        )}
                       </div>
                       
-                      {/* Progress Section */}
-                      <div className="bg-gray-50 rounded-xl p-4 space-y-3 group-hover:bg-gray-100/50 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-700">Progresso do Follow-up</span>
-                          <span className="text-sm font-bold text-gray-800">
-                            {Math.round(getFollowUpProgress(client))}%
-                          </span>
+                      {/* Progresso */}
+                      <div className="mb-4 pr-8">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                          <span>Progresso do Follow-up</span>
+                          <span className="ml-2">{Math.round(getFollowUpProgress(client))}%</span>
                         </div>
-                        <div className="relative">
-                          <Progress 
-                            value={getFollowUpProgress(client)} 
-                            className="h-2 bg-gray-200 [&>div]:bg-gradient-to-r [&>div]:from-gray-600 [&>div]:to-gray-700"
-                          />
-                        </div>
+                        <Progress value={getFollowUpProgress(client)} className="h-1.5 w-full max-w-md" />
                       </div>
                       
-                      {/* Info Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group-hover:bg-gray-100/70 transition-colors">
-                          <Calendar className="h-4 w-4 text-gray-600" />
-                          <div>
-                            <p className="text-xs text-gray-600 font-medium">Iniciado em</p>
-                            <p className="text-sm font-semibold text-gray-800">
-                              {dayjs(client.createdAt).format('DD/MM/YYYY')}
-                            </p>
-                          </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>Iniciado em {dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
                         </div>
                         
                         {client.nextAppointment && (
-                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group-hover:bg-gray-100/70 transition-colors">
-                            <Clock className="h-4 w-4 text-gray-600" />
-                            <div>
-                              <p className="text-xs text-gray-600 font-medium">Próximo</p>
-                              <p className="text-sm font-semibold text-gray-800">
-                                {dayjs(client.nextAppointment.scheduledStart).format('DD/MM HH:mm')}
-                              </p>
-                            </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            <span>Próximo: {dayjs(client.nextAppointment.scheduledStart).format('DD/MM HH:mm')}</span>
                           </div>
                         )}
                         
                         {client.contactName && (
-                          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg group-hover:bg-gray-100/70 transition-colors">
-                            <Users className="h-4 w-4 text-gray-600" />
-                            <div>
-                              <p className="text-xs text-gray-600 font-medium">Contato</p>
-                              <p className="text-sm font-semibold text-gray-800 truncate">
-                                {client.contactName}
-                              </p>
-                            </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            <span>{client.contactName}</span>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
                   
-                  {/* Action Button */}
                   <Link href={`/clientes/${client.id}`}>
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      className="ml-6 border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 group-hover:shadow-md transition-all duration-300"
-                    >
-                      <Eye className="h-5 w-5 text-gray-600" />
+                    <Button variant="outline" size="sm">
+                      <Eye className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
               </CardContent>
-              
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-gray-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-500"></div>
             </Card>
           ))}
         </div>
