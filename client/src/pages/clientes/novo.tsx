@@ -162,8 +162,19 @@ export function NovoClientePage() {
   })
 
   const onSubmit = (data: ClienteFormData) => {
+    console.log('Formulário submetido com dados:', data)
+    console.log('Contatos no formulário:', data.contatos_empresa)
     // A validação de contatos agora é feita pelo Zod schema
     createClientMutation.mutate(data)
+  }
+
+  const onSubmitError = (errors: any) => {
+    console.log('Erros de validação:', errors)
+    toast({
+      title: 'Erro no formulário',
+      description: 'Verifique os campos obrigatórios e tente novamente.',
+      variant: 'destructive',
+    })
   }
 
   const adicionarContato = () => {
@@ -171,7 +182,7 @@ export function NovoClientePage() {
       const novosContatos = [...contatos, novoContato]
       setContatos(novosContatos)
       // Atualizar o campo do formulário também
-      form.setValue('contatos_empresa', novosContatos)
+      form.setValue('contatos_empresa', novosContatos, { shouldValidate: true, shouldDirty: true })
       setNovoContato({ nome: '', email: '', telefone: '', cargo: '' })
     }
   }
@@ -180,7 +191,7 @@ export function NovoClientePage() {
     const novosContatos = contatos.filter((_, i) => i !== index)
     setContatos(novosContatos)
     // Atualizar o campo do formulário também
-    form.setValue('contatos_empresa', novosContatos)
+    form.setValue('contatos_empresa', novosContatos, { shouldValidate: true, shouldDirty: true })
   }
 
 
@@ -209,7 +220,10 @@ export function NovoClientePage() {
           telefone: data.telefone || '',
           cargo: 'Responsável',
         }
-        setContatos(prev => [novoContatoEmpresa, ...prev])
+        const prevContatos = form.getValues('contatos_empresa')
+        const novosContatos = [novoContatoEmpresa, ...prevContatos]
+        setContatos(novosContatos)
+        form.setValue('contatos_empresa', novosContatos, { shouldValidate: true, shouldDirty: true })
       }
       
       toast({
@@ -256,7 +270,7 @@ export function NovoClientePage() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit, onSubmitError)} className="space-y-6">
           {/* Dados da Empresa */}
           <Card>
             <CardHeader>
