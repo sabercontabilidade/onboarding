@@ -164,6 +164,32 @@ export function NovoClientePage() {
   const onSubmit = (data: ClienteFormData) => {
     console.log('Formulário submetido com dados:', data)
     console.log('Contatos no formulário:', data.contatos_empresa)
+    console.log('Número de contatos:', data.contatos_empresa.length)
+    
+    // Validação adicional para garantir que os contatos não estão vazios
+    if (data.contatos_empresa.length === 0) {
+      toast({
+        title: 'Contatos obrigatórios',
+        description: 'É necessário adicionar pelo menos um contato da empresa.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    // Validar se todos os contatos têm campos preenchidos
+    const contatosInvalidos = data.contatos_empresa.some(contato => 
+      !contato.nome?.trim() || !contato.email?.trim() || !contato.telefone?.trim() || !contato.cargo?.trim()
+    )
+    
+    if (contatosInvalidos) {
+      toast({
+        title: 'Contatos incompletos',
+        description: 'Todos os campos dos contatos são obrigatórios (nome, cargo, email, telefone).',
+        variant: 'destructive',
+      })
+      return
+    }
+    
     // A validação de contatos agora é feita pelo Zod schema
     createClientMutation.mutate(data)
   }
@@ -212,18 +238,23 @@ export function NovoClientePage() {
       form.setValue('nome', data.nome || '')
       setCnpjEncontrado(true)
       
-      // Se houver informações de contato, adicionar automaticamente
-      if (data.email || data.telefone) {
+      // Se houver informações de contato VÁLIDAS, adicionar automaticamente
+      if (data.email && data.email.trim() && data.telefone && data.telefone.trim()) {
         const novoContatoEmpresa = {
           nome: data.nome || 'Contato Principal',
-          email: data.email || '',
-          telefone: data.telefone || '',
+          email: data.email.trim(),
+          telefone: data.telefone.trim(),
           cargo: 'Responsável',
         }
         const prevContatos = form.getValues('contatos_empresa')
         const novosContatos = [novoContatoEmpresa, ...prevContatos]
         setContatos(novosContatos)
         form.setValue('contatos_empresa', novosContatos, { shouldValidate: true, shouldDirty: true })
+        
+        toast({
+          title: 'Contato adicionado automaticamente',
+          description: 'Encontramos dados de contato no CNPJ e adicionamos automaticamente.',
+        })
       }
       
       toast({
