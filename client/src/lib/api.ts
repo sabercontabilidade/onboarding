@@ -49,6 +49,11 @@ export const api = {
         body: JSON.stringify(data),
       }),
     
+    delete: (id: string) =>
+      apiRequest<void>(`/clients/${id}`, {
+        method: 'DELETE',
+      }),
+    
     contacts: (id: string) =>
       apiRequest<any[]>(`/clients/${id}/contacts`),
     

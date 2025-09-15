@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'wouter'
 import { 
   Search, 
@@ -23,16 +23,48 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { api } from '@/lib/api'
+import { useToast } from '@/hooks/use-toast'
 import dayjs from '@/lib/dayjs'
 
 export function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [, setLocation] = useLocation()
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
   
   const { data: clients, isLoading } = useQuery({
     queryKey: ['/api/clients', searchTerm],
     queryFn: () => api.clients.list(searchTerm || undefined),
+  })
+
+  const deleteClientMutation = useMutation({
+    mutationFn: (clientId: string) => api.clients.delete(clientId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] })
+      toast({
+        title: 'Cliente excluído',
+        description: 'O cliente foi removido com sucesso.',
+      })
+    },
+    onError: () => {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o cliente. Tente novamente.',
+        variant: 'destructive',
+      })
+    },
   })
 
   const getStatusColor = (status: string) => {
@@ -122,13 +154,6 @@ export function ClientesPage() {
                         >
                           {getStatusLabel(client.status)}
                         </Badge>
-                        {client.currentStage && (
-                          <Badge 
-                            variant="outline"
-                          >
-                            {client.currentStage.stage}
-                          </Badge>
-                        )}
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -162,10 +187,33 @@ export function ClientesPage() {
                         <Edit className="mr-2 h-4 w-4" />
                         Editar
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Excluir
-                      </DropdownMenuItem>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza de que deseja excluir o cliente "{client.companyName}"? 
+                              Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteClientMutation.mutate(client.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                              disabled={deleteClientMutation.isPending}
+                            >
+                              {deleteClientMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

@@ -72,21 +72,13 @@ const clienteSchema = z.object({
 
 type ClienteFormData = z.infer<typeof clienteSchema>
 
-const canaisDisponiveis = [
-  { value: 'EMAIL', label: 'E-mail' },
-  { value: 'TELEFONE', label: 'Telefone' },
-  { value: 'WHATSAPP', label: 'WhatsApp' },
-  { value: 'TEAMS', label: 'Microsoft Teams' },
-  { value: 'PRESENCIAL', label: 'Presencial' },
-]
 
 export function NovoClientePage() {
   const [, setLocation] = useLocation()
   const { toast } = useToast()
   const queryClient = useQueryClient()
   
-  const [contatos, setContatos] = useState<Array<z.infer<typeof contatoSchema>>>([])
-  const [canaisSelecionados, setCanaisSelecionados] = useState<string[]>([])
+  const [contatos, setContatos] = useState<Array<z.infer<typeof contatoSchema>>>([])  
   const [novoContato, setNovoContato] = useState<z.infer<typeof contatoSchema>>({
     nome: '',
     email: '',
@@ -206,13 +198,6 @@ export function NovoClientePage() {
     form.setValue('contatos_empresa', novosContatos)
   }
 
-  const toggleCanal = (canal: string) => {
-    setCanaisSelecionados(prev => 
-      prev.includes(canal) 
-        ? prev.filter(c => c !== canal)
-        : [...prev, canal]
-    )
-  }
 
   // Função para buscar dados via API da Receita Federal
   const buscarDadosCNPJ = async (cnpj: string) => {
@@ -514,26 +499,6 @@ export function NovoClientePage() {
             </CardContent>
           </Card>
 
-          {/* Canais de Comunicação */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Canais de Comunicação</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {canaisDisponiveis.map((canal) => (
-                  <Badge
-                    key={canal.value}
-                    variant={canaisSelecionados.includes(canal.value) ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => toggleCanal(canal.value)}
-                  >
-                    {canal.label}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Botões */}
           <div className="flex gap-3">
