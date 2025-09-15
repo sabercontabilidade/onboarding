@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocation } from 'wouter'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
-import { api, invalidateQueries } from '@/lib/api'
+import { api } from '@/lib/api'
 
 const contatoSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
@@ -131,16 +131,33 @@ export function NovoClientePage() {
       
       return api.clients.create(backendData)
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Exibir toast primeiro
       toast({
         title: 'Cliente criado com sucesso!',
         description: 'O cliente foi cadastrado e os agendamentos obrigatórios foram criados.',
       })
-      invalidateQueries(['/api/clients'])
-      // Usar setTimeout para evitar conflito de DOM
-      setTimeout(() => {
+      
+      // Invalidar queries de forma assíncrona e segura
+      try {
+        await queryClient.invalidateQueries({ 
+          queryKey: ['/api/clients'] 
+        })
+        
+        // Aguardar frames para garantir que o DOM está estável
+        await new Promise(resolve => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(resolve)
+          })
+        })
+        
+        // Navegar de forma segura
         setLocation('/clientes')
-      }, 100)
+      } catch (error) {
+        console.error('Erro ao atualizar cache:', error)
+        // Navegar mesmo se houver erro no cache
+        setTimeout(() => setLocation('/clientes'), 50)
+      }
     },
     onError: (error) => {
       console.error('Erro ao criar cliente:', error)
@@ -257,7 +274,7 @@ export function NovoClientePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={useCallback(() => setLocation('/clientes'), [setLocation])}>
+        <Button variant="ghost" size="sm" onClick={() => setLocation('/clientes')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -523,7 +540,7 @@ export function NovoClientePage() {
             <Button
               type="button"
               variant="outline"
-              onClick={useCallback(() => setLocation('/clientes'), [setLocation])}
+              onClick={() => setLocation('/clientes')}
             >
               Cancelar
             </Button>
