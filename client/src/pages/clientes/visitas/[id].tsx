@@ -135,27 +135,21 @@ export function ClienteVisitasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/visitas">
-            <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Visitas - {client?.companyName}
-            </h1>
-            <p className="text-muted-foreground">
-              Histórico de visitas e ATAs registradas
-            </p>
-          </div>
+      <div className="flex items-center gap-4">
+        <Link href="/visitas">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Visitas - {client?.companyName}
+          </h1>
+          <p className="text-muted-foreground">
+            Histórico de visitas e ATAs registradas
+          </p>
         </div>
-        <Button onClick={() => setShowNewVisitModal(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova ATA
-        </Button>
       </div>
 
       {/* Informações do Cliente */}
