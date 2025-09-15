@@ -189,7 +189,7 @@ export function AgendamentosPage() {
                             
                             {agendamento.client.createdAt && (
                               <div className="flex items-center gap-1">
-                                <span className="font-medium">🎯 TESTE: Cliente cadastrado em:</span>
+                                <span className="font-medium">Cliente cadastrado em:</span>
                                 <span>{dayjs(agendamento.client.createdAt).format('DD/MM/YYYY')}</span>
                               </div>
                             )}
