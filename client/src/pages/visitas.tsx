@@ -89,17 +89,11 @@ export function VisitasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Visitas Técnicas</h1>
-          <p className="text-muted-foreground">
-            Acompanhe as ATAs e resultados das visitas realizadas
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova ATA
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Visitas Técnicas</h1>
+        <p className="text-muted-foreground">
+          Acompanhe as ATAs e resultados das visitas realizadas
+        </p>
       </div>
 
       {/* Filtros e Busca */}
