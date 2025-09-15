@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'wouter'
+import { Link, useLocation } from 'wouter'
 import { 
   UserPlus, 
   Clock, 
@@ -21,6 +21,7 @@ import dayjs from '@/lib/dayjs'
 
 export function OnboardingPage() {
   const [refreshKey, setRefreshKey] = useState(0)
+  const [, setLocation] = useLocation()
   
   const { data: clients, isLoading } = useQuery({
     queryKey: ['/api/clients', refreshKey],
@@ -94,18 +95,14 @@ export function OnboardingPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/clientes">
-            <Button variant="outline">
-              <Users className="mr-2 h-4 w-4" />
-              Ver Todos os Clientes
-            </Button>
-          </Link>
-          <Link href="/clientes/novo">
-            <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Novo Cliente
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={() => setLocation('/clientes')}>
+            <Users className="mr-2 h-4 w-4" />
+            Ver Todos os Clientes
+          </Button>
+          <Button onClick={() => setLocation('/clientes/novo')}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Novo Cliente
+          </Button>
         </div>
       </div>
 
@@ -248,11 +245,9 @@ export function OnboardingPage() {
                     </div>
                   </div>
                   
-                  <Link href={`/clientes/${client.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <Button variant="outline" size="sm" onClick={() => setLocation(`/clientes/${client.id}`)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -266,12 +261,10 @@ export function OnboardingPage() {
             <p className="text-muted-foreground text-center mb-4">
               Todos os clientes já concluíram o processo de onboarding ou ainda não há clientes cadastrados.
             </p>
-            <Link href="/clientes/novo">
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Cadastrar Novo Cliente
-              </Button>
-            </Link>
+            <Button onClick={() => setLocation('/clientes/novo')}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Cadastrar Novo Cliente
+            </Button>
           </CardContent>
         </Card>
       )}

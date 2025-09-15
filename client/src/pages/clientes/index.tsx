@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'wouter'
+import { Link, useLocation } from 'wouter'
 import { 
   Search, 
   Plus, 
@@ -28,6 +28,7 @@ import dayjs from '@/lib/dayjs'
 
 export function ClientesPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const [, setLocation] = useLocation()
   
   const { data: clients, isLoading } = useQuery({
     queryKey: ['/api/clients', searchTerm],
@@ -63,12 +64,10 @@ export function ClientesPage() {
             Gerencie seus clientes e acompanhe o processo de onboarding
           </p>
         </div>
-        <Link href="/clientes/novo">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Cliente
-          </Button>
-        </Link>
+        <Button onClick={() => setLocation('/clientes/novo')}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Cliente
+        </Button>
       </div>
 
       {/* Busca */}
@@ -155,17 +154,13 @@ export function ClientesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/clientes/${client.id}`}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver detalhes
-                        </Link>
+                      <DropdownMenuItem onClick={() => setLocation(`/clientes/${client.id}`)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Ver detalhes
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/clientes/${client.id}/editar`}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </Link>
+                      <DropdownMenuItem onClick={() => setLocation(`/clientes/${client.id}/editar`)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-red-600">
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -189,12 +184,10 @@ export function ClientesPage() {
                 : 'Comece cadastrando seu primeiro cliente.'
               }
             </p>
-            <Link href="/clientes/novo">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Cliente
-              </Button>
-            </Link>
+            <Button onClick={() => setLocation('/clientes/novo')}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Cliente
+            </Button>
           </CardContent>
         </Card>
       )}
