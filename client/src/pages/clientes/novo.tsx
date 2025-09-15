@@ -106,21 +106,31 @@ export function NovoClientePage() {
 
   const createClientMutation = useMutation({
     mutationFn: (data: ClienteFormData) => {
+      // Validar que há pelo menos um contato
+      if (!data.contatos_empresa || data.contatos_empresa.length === 0) {
+        throw new Error('É obrigatório adicionar pelo menos um contato')
+      }
+
+      // Validar que o primeiro contato tem todos os campos obrigatórios
+      const firstContact = data.contatos_empresa[0]
+      if (!firstContact.nome?.trim() || !firstContact.email?.trim() || !firstContact.telefone?.trim()) {
+        throw new Error('Todos os campos do contato são obrigatórios (nome, email, telefone)')
+      }
+
       // Converter dados do frontend para o formato do backend
-      const firstContact = data.contatos_empresa[0] || { nome: '', email: '', telefone: '' }
-      
       const backendData = {
         companyName: data.nome,
-        cnpj: data.cnpj,
-        contactName: firstContact.nome || 'Sem contato',
-        contactEmail: firstContact.email || '',
-        contactPhone: firstContact.telefone || '',
+        cnpj: data.cnpj.replace(/\D/g, ''), // Normalizar CNPJ - apenas dígitos
+        contactName: firstContact.nome.trim(),
+        contactEmail: firstContact.email.trim(),
+        contactPhone: firstContact.telefone.trim(),
         status: 'onboarding',
         notes: data.observacoes || '',
         assigneeId: null,
-        sector: null,
+        sector: firstContact.cargo || null,
       }
       
+      console.log('Enviando dados para o backend:', backendData)
       return api.clients.create(backendData)
     },
     onSuccess: async () => {
@@ -151,46 +161,31 @@ export function NovoClientePage() {
         setTimeout(() => setLocation('/clientes'), 50)
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Erro ao criar cliente:', error)
+      
+      let errorMessage = 'Erro desconhecido ao criar cliente'
+      
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error
+      }
+      
       toast({
         title: 'Erro ao criar cliente',
-        description: error.message || 'Erro desconhecido ao criar cliente',
+        description: errorMessage,
         variant: 'destructive',
       })
     },
   })
 
   const onSubmit = (data: ClienteFormData) => {
-    console.log('Formulário submetido com dados:', data)
-    console.log('Contatos no formulário:', data.contatos_empresa)
-    console.log('Número de contatos:', data.contatos_empresa.length)
+    console.log('🚀 Formulário submetido com dados:', data)
+    console.log('📋 Contatos no formulário:', data.contatos_empresa)
+    console.log('🔢 Número de contatos:', data.contatos_empresa?.length || 0)
     
-    // Validação adicional para garantir que os contatos não estão vazios
-    if (data.contatos_empresa.length === 0) {
-      toast({
-        title: 'Contatos obrigatórios',
-        description: 'É necessário adicionar pelo menos um contato da empresa.',
-        variant: 'destructive',
-      })
-      return
-    }
-    
-    // Validar se todos os contatos têm campos preenchidos
-    const contatosInvalidos = data.contatos_empresa.some(contato => 
-      !contato.nome?.trim() || !contato.email?.trim() || !contato.telefone?.trim() || !contato.cargo?.trim()
-    )
-    
-    if (contatosInvalidos) {
-      toast({
-        title: 'Contatos incompletos',
-        description: 'Todos os campos dos contatos são obrigatórios (nome, cargo, email, telefone).',
-        variant: 'destructive',
-      })
-      return
-    }
-    
-    // A validação de contatos agora é feita pelo Zod schema
+    // A mutation agora faz toda a validação
     createClientMutation.mutate(data)
   }
 

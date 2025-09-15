@@ -42,8 +42,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientData = insertClientSchema.parse(req.body);
       const client = await storage.createClient(clientData);
       res.status(201).json(client);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid client data" });
+    } catch (error: any) {
+      console.error('Erro ao criar cliente:', error);
+      if (error.code === 'DUPLICATE_CNPJ') {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "Dados do cliente inválidos" });
+      }
     }
   });
 

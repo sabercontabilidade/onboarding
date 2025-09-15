@@ -156,6 +156,19 @@ export class MemStorage implements IStorage {
   }
 
   async createClient(insertClient: InsertClient): Promise<Client> {
+    // Verificar se já existe cliente com o mesmo CNPJ (normalizado)
+    if (insertClient.cnpj) {
+      const normalizedNewCnpj = insertClient.cnpj.replace(/\D/g, '');
+      const existingClient = Array.from(this.clients.values()).find(
+        client => client.cnpj && client.cnpj.replace(/\D/g, '') === normalizedNewCnpj
+      );
+      if (existingClient) {
+        const error = new Error(`Cliente com CNPJ ${insertClient.cnpj} já está cadastrado`);
+        (error as any).code = 'DUPLICATE_CNPJ';
+        throw error;
+      }
+    }
+
     const id = randomUUID();
     const client: Client = {
       ...insertClient,
