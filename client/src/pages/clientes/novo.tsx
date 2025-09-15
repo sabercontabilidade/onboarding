@@ -107,7 +107,7 @@ export function NovoClientePage() {
   const createClientMutation = useMutation({
     mutationFn: (data: ClienteFormData) => {
       // Converter dados do frontend para o formato do backend
-      const firstContact = contatos[0] || { nome: '', email: '', telefone: '' }
+      const firstContact = data.contatos_empresa[0] || { nome: '', email: '', telefone: '' }
       
       const backendData = {
         companyName: data.nome,
@@ -162,23 +162,8 @@ export function NovoClientePage() {
   })
 
   const onSubmit = (data: ClienteFormData) => {
-    // Validar se há pelo menos um contato
-    if (contatos.length === 0) {
-      toast({
-        title: 'Contato obrigatório',
-        description: 'É necessário adicionar pelo menos um contato da empresa.',
-        variant: 'destructive',
-      })
-      return
-    }
-    
-    // Adicionar contatos ao form data
-    const dataWithContacts = {
-      ...data,
-      contatos_empresa: contatos
-    }
-    
-    createClientMutation.mutate(dataWithContacts)
+    // A validação de contatos agora é feita pelo Zod schema
+    createClientMutation.mutate(data)
   }
 
   const adicionarContato = () => {
