@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocation } from 'wouter'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -137,7 +137,10 @@ export function NovoClientePage() {
         description: 'O cliente foi cadastrado e os agendamentos obrigatórios foram criados.',
       })
       invalidateQueries(['/api/clients'])
-      setLocation('/clientes')
+      // Usar setTimeout para evitar conflito de DOM
+      setTimeout(() => {
+        setLocation('/clientes')
+      }, 100)
     },
     onError: (error) => {
       console.error('Erro ao criar cliente:', error)
@@ -254,7 +257,7 @@ export function NovoClientePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => setLocation('/clientes')}>
+        <Button variant="ghost" size="sm" onClick={useCallback(() => setLocation('/clientes'), [setLocation])}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -520,7 +523,7 @@ export function NovoClientePage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setLocation('/clientes')}
+              onClick={useCallback(() => setLocation('/clientes'), [setLocation])}
             >
               Cancelar
             </Button>
