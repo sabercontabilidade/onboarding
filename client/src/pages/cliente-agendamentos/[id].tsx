@@ -177,7 +177,7 @@ export function ClienteAgendamentosPage() {
             
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>Cliente desde {dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
+              <span>Cliente cadastrado em {dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
             </div>
           </div>
         </CardContent>

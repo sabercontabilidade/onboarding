@@ -132,7 +132,7 @@ export default function ClientOverview() {
                         <div>
                           <p className="font-medium text-foreground" data-testid={`client-company-${client.id}`}>{client.companyName}</p>
                           <p className="text-xs text-muted-foreground" data-testid={`client-cnpj-${client.id}`}>{client.cnpj}</p>
-                          <p className="text-xs text-muted-foreground" data-testid={`client-created-${client.id}`}>Cliente desde {dayjs(client.createdAt).format('DD/MM/YYYY')}</p>
+                          <p className="text-xs text-muted-foreground" data-testid={`client-created-${client.id}`}>Cliente cadastrado em {dayjs(client.createdAt).format('DD/MM/YYYY')}</p>
                         </div>
                       </div>
                     </td>
