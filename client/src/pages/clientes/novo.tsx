@@ -62,7 +62,7 @@ const clienteSchema = z.object({
   nome: z.string().min(1, 'Nome da empresa é obrigatório'),
   cnpj: z.string().min(1, 'CNPJ é obrigatório').refine(validarCNPJ, 'CNPJ inválido'),
   data_inicio_contrato: z.string().min(1, 'Data de início do contrato é obrigatória'),
-  contatos_empresa: z.array(contatoSchema).default([]),
+  contatos_empresa: z.array(contatoSchema).min(1, 'É obrigatório adicionar pelo menos um contato').default([]),
   canais: z.array(z.string()).default([]),
   status_onboarding: z.enum(['INICIADO', 'EM_ANDAMENTO', 'CONCLUIDO', 'SUSPENSO']).default('INICIADO'),
   status_relacionamento: z.enum(['PENDENTE', 'ATIVO', 'INATIVO']).default('PENDENTE'),
@@ -424,6 +424,15 @@ export function NovoClientePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="contatos_empresa"
+                render={() => (
+                  <FormItem>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               {contatos.length === 0 && (
                 <div className="p-3 border border-orange-200 bg-orange-50 rounded-lg">
                   <p className="text-sm text-orange-800">
