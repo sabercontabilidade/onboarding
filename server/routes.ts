@@ -40,12 +40,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/clients", async (req, res) => {
     try {
       const clientData = insertClientSchema.parse(req.body);
+      
+      // Validação adicional para campos de contato obrigatórios
+      if (!clientData.contactName?.trim()) {
+        return res.status(422).json({ error: "Nome do contato é obrigatório e não pode estar vazio" });
+      }
+      
+      if (!clientData.contactEmail?.trim()) {
+        return res.status(422).json({ error: "Email do contato é obrigatório e não pode estar vazio" });
+      }
+      
+      // Validação básica de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(clientData.contactEmail.trim())) {
+        return res.status(422).json({ error: "Email do contato deve ter formato válido" });
+      }
+      
+      if (!clientData.contactPhone?.trim()) {
+        return res.status(422).json({ error: "Telefone do contato é obrigatório e não pode estar vazio" });
+      }
+      
+      if (!clientData.companyName?.trim()) {
+        return res.status(422).json({ error: "Nome da empresa é obrigatório e não pode estar vazio" });
+      }
+      
+      console.log('✅ Validação de contatos passou - criando cliente:', {
+        companyName: clientData.companyName,
+        contactName: clientData.contactName,
+        contactEmail: clientData.contactEmail,
+        contactPhone: clientData.contactPhone
+      });
+      
       const client = await storage.createClient(clientData);
       res.status(201).json(client);
     } catch (error: any) {
       console.error('Erro ao criar cliente:', error);
       if (error.code === 'DUPLICATE_CNPJ') {
         res.status(409).json({ error: error.message });
+      } else if (error.name === 'ZodError') {
+        res.status(422).json({ error: "Dados inválidos: " + error.issues.map((i: any) => i.message).join(', ') });
       } else {
         res.status(400).json({ error: "Dados do cliente inválidos" });
       }
