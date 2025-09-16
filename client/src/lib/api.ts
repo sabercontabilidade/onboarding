@@ -67,6 +67,12 @@ export const api = {
     
     visits: (id: string) =>
       apiRequest<any[]>(`/clients/${id}/visits`),
+    
+    startOnboarding: (id: string, assigneeId?: string) =>
+      apiRequest<{ success: boolean; message: string }>(`/clients/${id}/start-onboarding`, {
+        method: 'POST',
+        body: JSON.stringify({ assigneeId }),
+      }),
   },
 
   // Contatos

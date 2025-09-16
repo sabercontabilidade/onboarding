@@ -178,14 +178,38 @@ export class MemStorage implements IStorage {
     };
     this.clients.set(id, client);
 
-    // Create initial onboarding stage
-    await this.createOnboardingStage({
+    // Create activity for client creation (but no onboarding stages)
+    await this.createActivity({
       clientId: id,
+      userId: insertClient.assigneeId,
+      type: "client_created",
+      description: `Cliente ${insertClient.companyName} adicionado ao sistema`,
+    });
+
+    return client;
+  }
+
+  async startOnboarding(clientId: string, assigneeId?: string): Promise<void> {
+    // Verificar se cliente existe
+    const client = this.clients.get(clientId);
+    if (!client) throw new Error("Cliente não encontrado");
+    
+    // Verificar se onboarding já foi iniciado
+    const existingStage = Array.from(this.onboardingStages.values()).find(
+      stage => stage.clientId === clientId
+    );
+    if (existingStage) {
+      throw new Error("Onboarding já foi iniciado para este cliente");
+    }
+
+    // Criar etapa inicial de onboarding
+    await this.createOnboardingStage({
+      clientId: clientId,
       stage: "initial_meeting",
       status: "pending",
     });
 
-    // Create initial appointment (1 week from now)
+    // Criar agendamento inicial (1 semana a partir de hoje)
     const appointmentDate = new Date();
     appointmentDate.setDate(appointmentDate.getDate() + 7);
     appointmentDate.setHours(14, 0, 0, 0); // 14:00
@@ -194,9 +218,9 @@ export class MemStorage implements IStorage {
     endDate.setHours(15, 0, 0, 0); // 15:00
 
     await this.createAppointment({
-      clientId: id,
-      assigneeId: insertClient.assigneeId,
-      title: `Reunião inicial - ${insertClient.companyName}`,
+      clientId: clientId,
+      assigneeId: assigneeId || client.assigneeId,
+      title: `Reunião inicial - ${client.companyName}`,
       description: "Reunião de onboarding inicial para apresentação da empresa e coleta de documentos",
       type: "meeting",
       scheduledStart: appointmentDate,
@@ -207,15 +231,13 @@ export class MemStorage implements IStorage {
       googleEventId: null,
     });
 
-    // Create activity
+    // Criar atividade
     await this.createActivity({
-      clientId: id,
-      userId: insertClient.assigneeId,
-      type: "client_created",
-      description: `Cliente ${insertClient.companyName} adicionado ao sistema`,
+      clientId: clientId,
+      userId: assigneeId || client.assigneeId,
+      type: "onboarding_started",
+      description: `Processo de onboarding iniciado para ${client.companyName}`,
     });
-
-    return client;
   }
 
   async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> {

@@ -11,7 +11,8 @@ import {
   MoreHorizontal,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Play
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -70,6 +71,37 @@ export function ClientesPage() {
       toast({
         title: 'Erro',
         description: error.message || 'Não foi possível excluir o cliente. Tente novamente.',
+        variant: 'destructive',
+      })
+    },
+  })
+
+  const startOnboardingMutation = useMutation({
+    mutationFn: (clientId: string) => {
+      console.log('🚀 Iniciando onboarding para cliente:', clientId)
+      return api.clients.startOnboarding(clientId)
+    },
+    onSuccess: (data, clientId) => {
+      console.log('✅ Onboarding iniciado com sucesso:', clientId)
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] })
+      toast({
+        title: 'Onboarding iniciado!',
+        description: 'O processo de onboarding foi iniciado com sucesso. Verifique o menu Onboarding.',
+      })
+    },
+    onError: (error: any) => {
+      console.error('❌ Erro ao iniciar onboarding:', error)
+      let errorMessage = 'Não foi possível iniciar o onboarding. Tente novamente.'
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      toast({
+        title: 'Erro ao iniciar onboarding',
+        description: errorMessage,
         variant: 'destructive',
       })
     },
@@ -183,50 +215,64 @@ export function ClientesPage() {
                     </div>
                   </div>
                   
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setLocation(`/clientes/${client.id}`)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        Ver detalhes
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setLocation(`/clientes/${client.id}/editar`)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Editar
-                      </DropdownMenuItem>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza de que deseja excluir o cliente "{client.companyName}"? 
-                              Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteClientMutation.mutate(client.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                              disabled={deleteClientMutation.isPending}
-                            >
-                              {deleteClientMutation.isPending ? 'Excluindo...' : 'Excluir'}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center gap-2">
+                    {/* Botão Iniciar Onboarding - sempre visível por enquanto */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startOnboardingMutation.mutate(client.id)}
+                      disabled={startOnboardingMutation.isPending}
+                      data-testid={`button-iniciar-onboarding-${client.id}`}
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      {startOnboardingMutation.isPending ? 'Iniciando...' : 'Iniciar Onboarding'}
+                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setLocation(`/clientes/${client.id}`)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver detalhes
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocation(`/clientes/${client.id}/editar`)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza de que deseja excluir o cliente "{client.companyName}"? 
+                                Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteClientMutation.mutate(client.id)}
+                                className="bg-red-600 hover:bg-red-700"
+                                disabled={deleteClientMutation.isPending}
+                              >
+                                {deleteClientMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </CardContent>
             </Card>

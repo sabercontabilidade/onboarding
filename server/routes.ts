@@ -104,6 +104,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/clients/:id/start-onboarding", async (req, res) => {
+    try {
+      const clientId = req.params.id;
+      const { assigneeId } = req.body;
+      
+      await storage.startOnboarding(clientId, assigneeId);
+      
+      res.status(200).json({ 
+        success: true, 
+        message: "Processo de onboarding iniciado com sucesso" 
+      });
+    } catch (error: any) {
+      console.error('Erro ao iniciar onboarding:', error);
+      if (error.message.includes('não encontrado')) {
+        res.status(404).json({ error: error.message });
+      } else if (error.message.includes('já foi iniciado')) {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(400).json({ error: "Falha ao iniciar processo de onboarding" });
+      }
+    }
+  });
+
   // Appointment routes
   app.get("/api/appointments", async (req, res) => {
     try {
