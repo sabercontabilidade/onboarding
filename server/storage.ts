@@ -194,11 +194,8 @@ export class MemStorage implements IStorage {
     const client = this.clients.get(clientId);
     if (!client) throw new Error("Cliente não encontrado");
     
-    // Verificar se onboarding já foi iniciado
-    const existingStage = Array.from(this.onboardingStages.values()).find(
-      stage => stage.clientId === clientId
-    );
-    if (existingStage) {
+    // Verificar se o cliente já tem status 'onboarding'
+    if (client.status === 'onboarding') {
       throw new Error("Onboarding já foi iniciado para este cliente");
     }
 
@@ -241,6 +238,18 @@ export class MemStorage implements IStorage {
       type: "onboarding_started",
       description: `Processo de onboarding iniciado para ${client.companyName}`,
     });
+  }
+
+  async resetOnboarding(clientId: string): Promise<void> {
+    // Limpar todas as etapas de onboarding para este cliente
+    Array.from(this.onboardingStages.entries()).forEach(([key, stage]) => {
+      if (stage.clientId === clientId) {
+        this.onboardingStages.delete(key);
+      }
+    });
+    
+    // Voltar status do cliente para 'pending'
+    await this.updateClient(clientId, { status: 'pending' });
   }
 
   async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> {
