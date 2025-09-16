@@ -207,7 +207,7 @@ export function ClientesPage() {
                         
                         {client.createdAt && (
                           <div className="flex items-center gap-1">
-                            <span>Criado:</span>
+                            <span className="font-medium">Cliente cadastrado em:</span>
                             <span>{dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
                           </div>
                         )}
