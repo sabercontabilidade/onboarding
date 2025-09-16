@@ -1,6 +1,19 @@
 import { type User, type InsertUser, type Client, type InsertClient, type OnboardingStage, type InsertOnboardingStage, type Appointment, type InsertAppointment, type Activity, type InsertActivity, type Integration, type InsertIntegration, type Visit, type InsertVisit, type ClientWithDetails, type AppointmentWithDetails, type ActivityWithDetails, type DashboardMetrics } from "@shared/schema";
 import { randomUUID } from "crypto";
 
+// Função para formatar CNPJ
+function formatCnpj(cnpj: string | null): string | null {
+  if (!cnpj) return null;
+  
+  // Remove caracteres não numéricos
+  const cnpjNums = cnpj.replace(/\D/g, '');
+  
+  if (cnpjNums.length !== 14) return cnpj; // Retorna como está se não tiver 14 dígitos
+  
+  // Formatar CNPJ: XX.XXX.XXX/XXXX-XX
+  return `${cnpjNums.slice(0, 2)}.${cnpjNums.slice(2, 5)}.${cnpjNums.slice(5, 8)}/${cnpjNums.slice(8, 12)}-${cnpjNums.slice(12, 14)}`;
+}
+
 export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
@@ -172,6 +185,7 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const client: Client = {
       ...insertClient,
+      cnpj: formatCnpj(insertClient.cnpj), // Formatar CNPJ antes de salvar
       id,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -259,6 +273,7 @@ export class MemStorage implements IStorage {
     const updated: Client = {
       ...client,
       ...updates,
+      cnpj: updates.cnpj !== undefined ? formatCnpj(updates.cnpj) : client.cnpj, // Formatar CNPJ se foi atualizado
       updatedAt: new Date(),
     };
     this.clients.set(id, updated);
