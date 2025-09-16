@@ -301,17 +301,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return aptDate.getTime() === today.getTime();
       }).length;
       
-      // Satisfação média das últimas visitas
-      const recentVisits = visits.filter((v: any) => v.satisfaction_rating).slice(-10);
-      const satisfacaoMedia = recentVisits.length > 0 
-        ? (recentVisits.reduce((acc: number, v: any) => acc + (v.satisfaction_rating || 0), 0) / recentVisits.length).toFixed(1)
-        : null;
+      // Total de atas salvas
+      const totalAtasSalvas = visits.length;
       
       res.json({
         resumo: {
           total_clientes: totalClientes,
           clientes_ativos: clientesAtivos,
-          satisfacao_media: satisfacaoMedia
+          total_atas_salvas: totalAtasSalvas
         },
         hoje: {
           reunioes_hoje: reunioesToday

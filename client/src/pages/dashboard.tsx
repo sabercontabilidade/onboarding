@@ -3,6 +3,7 @@ import {
   Users, 
   Calendar, 
   AlertCircle, 
+  FileText,
   Star,
   Clock,
   CheckCircle2,
@@ -89,10 +90,10 @@ export function Dashboard() {
         />
         
         <StatsCard
-          title="Satisfação Média"
-          value={resumo.satisfacao_media ? `${resumo.satisfacao_media}/10` : 'N/A'}
-          description="Últimas visitas"
-          icon={<Star />}
+          title="Atas Salvas"
+          value={resumo.total_atas_salvas || 0}
+          description="Total de atas técnicas"
+          icon={<FileText />}
         />
       </div>
 
