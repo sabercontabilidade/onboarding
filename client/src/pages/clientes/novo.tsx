@@ -78,7 +78,6 @@ export function NovoClientePage() {
   const { toast } = useToast()
   const queryClient = useQueryClient()
   
-  const [contatos, setContatos] = useState<Array<z.infer<typeof contatoSchema>>>([])  
   const [novoContato, setNovoContato] = useState<z.infer<typeof contatoSchema>>({
     nome: '',
     email: '',
@@ -223,19 +222,33 @@ export function NovoClientePage() {
   }
 
   const adicionarContato = () => {
-    if (novoContato.nome && novoContato.email && novoContato.telefone && novoContato.cargo) {
-      const novosContatos = [...contatos, novoContato]
-      setContatos(novosContatos)
-      // Atualizar o campo do formulário também
+    if (novoContato.nome.trim() && novoContato.email.trim() && novoContato.telefone.trim() && novoContato.cargo.trim()) {
+      const contatosAtuais = form.getValues('contatos_empresa') || []
+      const novosContatos = [...contatosAtuais, {
+        nome: novoContato.nome.trim(),
+        email: novoContato.email.trim(),
+        telefone: novoContato.telefone.trim(),
+        cargo: novoContato.cargo.trim(),
+      }]
       form.setValue('contatos_empresa', novosContatos, { shouldValidate: true, shouldDirty: true })
       setNovoContato({ nome: '', email: '', telefone: '', cargo: '' })
+      
+      toast({
+        title: 'Contato adicionado',
+        description: `Contato ${novoContato.nome} foi adicionado com sucesso.`,
+      })
+    } else {
+      toast({
+        title: 'Campos obrigatórios',
+        description: 'Todos os campos do contato são obrigatórios.',
+        variant: 'destructive',
+      })
     }
   }
 
   const removerContato = (index: number) => {
-    const novosContatos = contatos.filter((_, i) => i !== index)
-    setContatos(novosContatos)
-    // Atualizar o campo do formulário também
+    const contatosAtuais = form.getValues('contatos_empresa') || []
+    const novosContatos = contatosAtuais.filter((_, i) => i !== index)
     form.setValue('contatos_empresa', novosContatos, { shouldValidate: true, shouldDirty: true })
   }
 
@@ -265,9 +278,8 @@ export function NovoClientePage() {
           telefone: data.telefone.trim(),
           cargo: 'Responsável',
         }
-        const prevContatos = form.getValues('contatos_empresa')
+        const prevContatos = form.getValues('contatos_empresa') || []
         const novosContatos = [novoContatoEmpresa, ...prevContatos]
-        setContatos(novosContatos)
         form.setValue('contatos_empresa', novosContatos, { shouldValidate: true, shouldDirty: true })
         
         toast({
@@ -482,7 +494,7 @@ export function NovoClientePage() {
                   </FormItem>
                 )}
               />
-              {form.getValues('contatos_empresa')?.length === 0 && (
+              {(form.watch('contatos_empresa')?.length || 0) === 0 && (
                 <div className="p-3 border border-orange-200 bg-orange-50 rounded-lg">
                   <p className="text-sm text-orange-800">
                     ⚠️ É obrigatório adicionar pelo menos um contato da empresa com todos os campos preenchidos.
@@ -491,9 +503,9 @@ export function NovoClientePage() {
               )}
               
               {/* Lista de contatos */}
-              {contatos.length > 0 && (
+              {form.watch('contatos_empresa')?.length > 0 && (
                 <div className="space-y-2">
-                  {contatos.map((contato, index) => (
+                  {form.watch('contatos_empresa').map((contato: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{contato.nome}</p>
@@ -569,7 +581,7 @@ export function NovoClientePage() {
             </Button>
             <Button 
               type="submit" 
-              disabled={createClientMutation.isPending}
+              disabled={createClientMutation.isPending || (form.watch('contatos_empresa')?.length || 0) === 0}
             >
               {createClientMutation.isPending ? 'Criando...' : 'Criar Cliente'}
             </Button>
