@@ -50,18 +50,26 @@ export function ClientesPage() {
   })
 
   const deleteClientMutation = useMutation({
-    mutationFn: (clientId: string) => api.clients.delete(clientId),
-    onSuccess: () => {
+    mutationFn: (clientId: string) => {
+      console.log('🗑️ Excluindo cliente com ID:', clientId)
+      return api.clients.delete(clientId)
+    },
+    onSuccess: (data, clientId) => {
+      console.log('✅ Cliente excluído com sucesso:', clientId)
+      // Invalidar todas as queries relacionadas a clientes
       queryClient.invalidateQueries({ queryKey: ['/api/clients'] })
+      // Também forçar refetch para atualizar a lista imediatamente
+      queryClient.refetchQueries({ queryKey: ['/api/clients', searchTerm] })
       toast({
         title: 'Cliente excluído',
         description: 'O cliente foi removido com sucesso.',
       })
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('❌ Erro ao excluir cliente:', error)
       toast({
         title: 'Erro',
-        description: 'Não foi possível excluir o cliente. Tente novamente.',
+        description: error.message || 'Não foi possível excluir o cliente. Tente novamente.',
         variant: 'destructive',
       })
     },

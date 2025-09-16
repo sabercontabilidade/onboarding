@@ -24,6 +24,11 @@ async function apiRequest<T>(
     throw new Error(errorData || `Erro ${response.status}`)
   }
 
+  // Para status 204 (No Content), não há corpo JSON para fazer parse
+  if (response.status === 204) {
+    return undefined as T
+  }
+
   return response.json()
 }
 

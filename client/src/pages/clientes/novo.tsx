@@ -185,6 +185,30 @@ export function NovoClientePage() {
     console.log('📋 Contatos no formulário:', data.contatos_empresa)
     console.log('🔢 Número de contatos:', data.contatos_empresa?.length || 0)
     
+    // Validação adicional para garantir sincronização
+    if (!data.contatos_empresa || data.contatos_empresa.length === 0) {
+      toast({
+        title: 'Contatos obrigatórios',
+        description: 'É obrigatório adicionar pelo menos um contato da empresa com todos os campos preenchidos.',
+        variant: 'destructive',
+      })
+      return
+    }
+    
+    // Verificar se todos os contatos têm campos obrigatórios preenchidos
+    const contatoIncompleto = data.contatos_empresa.some(contato => 
+      !contato.nome?.trim() || !contato.email?.trim() || !contato.telefone?.trim() || !contato.cargo?.trim()
+    )
+    
+    if (contatoIncompleto) {
+      toast({
+        title: 'Contatos incompletos',
+        description: 'Todos os campos dos contatos são obrigatórios (nome, cargo, email, telefone).',
+        variant: 'destructive',
+      })
+      return
+    }
+    
     // A mutation agora faz toda a validação
     createClientMutation.mutate(data)
   }
@@ -458,7 +482,7 @@ export function NovoClientePage() {
                   </FormItem>
                 )}
               />
-              {contatos.length === 0 && (
+              {form.getValues('contatos_empresa')?.length === 0 && (
                 <div className="p-3 border border-orange-200 bg-orange-50 rounded-lg">
                   <p className="text-sm text-orange-800">
                     ⚠️ É obrigatório adicionar pelo menos um contato da empresa com todos os campos preenchidos.
