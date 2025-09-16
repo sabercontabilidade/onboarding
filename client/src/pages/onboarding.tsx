@@ -94,16 +94,10 @@ export function OnboardingPage() {
             Acompanhe o progresso de onboarding dos novos clientes
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setLocation('/clientes')}>
-            <Users className="mr-2 h-4 w-4" />
-            Ver Todos os Clientes
-          </Button>
-          <Button onClick={() => setLocation('/clientes/novo')}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Novo Cliente
-          </Button>
-        </div>
+        <Button variant="outline" onClick={() => setLocation('/clientes')}>
+          <Users className="mr-2 h-4 w-4" />
+          Ver Todos os Clientes
+        </Button>
       </div>
 
       {/* Estatísticas */}
@@ -261,9 +255,9 @@ export function OnboardingPage() {
             <p className="text-muted-foreground text-center mb-4">
               Todos os clientes já concluíram o processo de onboarding ou ainda não há clientes cadastrados.
             </p>
-            <Button onClick={() => setLocation('/clientes/novo')}>
-              <UserPlus className="mr-2 h-4 w-4" />
-              Cadastrar Novo Cliente
+            <Button variant="outline" onClick={() => setLocation('/clientes')}>
+              <Users className="mr-2 h-4 w-4" />
+              Ver Todos os Clientes
             </Button>
           </CardContent>
         </Card>
