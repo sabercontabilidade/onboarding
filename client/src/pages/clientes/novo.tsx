@@ -123,7 +123,7 @@ export function NovoClientePage() {
         contactName: firstContact.nome.trim(),
         contactEmail: firstContact.email.trim(),
         contactPhone: firstContact.telefone.trim(),
-        status: 'onboarding',
+        status: 'pending',
         notes: data.observacoes || '',
         assigneeId: null,
         sector: firstContact.cargo || null,

@@ -57,7 +57,7 @@ export default function NewClientModal({ isOpen, onClose }: NewClientModalProps)
       contactName: "",
       contactEmail: "",
       contactPhone: "",
-      status: "onboarding",
+      status: "pending",
       assigneeId: "user-1", // Default to the admin user
       notes: "",
       meetingDate: "",

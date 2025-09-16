@@ -21,7 +21,7 @@ export const clients = pgTable("clients", {
   contactName: text("contact_name").notNull(),
   contactEmail: text("contact_email").notNull(),
   contactPhone: text("contact_phone").notNull(),
-  status: text("status").notNull().default("onboarding"), // onboarding, active, inactive, pending
+  status: text("status").notNull().default("pending"), // onboarding, active, inactive, pending
   assigneeId: varchar("assignee_id").references(() => users.id),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

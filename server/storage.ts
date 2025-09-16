@@ -202,6 +202,9 @@ export class MemStorage implements IStorage {
       throw new Error("Onboarding já foi iniciado para este cliente");
     }
 
+    // Atualizar status do cliente para 'onboarding'
+    await this.updateClient(clientId, { status: 'onboarding' });
+
     // Criar etapa inicial de onboarding
     await this.createOnboardingStage({
       clientId: clientId,
