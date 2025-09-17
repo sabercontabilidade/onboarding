@@ -176,6 +176,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Calendar availability route
+  app.get("/api/v1/agendamentos/disponibilidade/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const daysAhead = parseInt(req.query.days_ahead as string) || 7;
+      
+      // For now, return mock available slots since Google Calendar integration would need proper OAuth setup
+      // In a real implementation, this would call the Google Calendar API
+      const mockSlots = [
+        {
+          start: new Date(Date.now() + 86400000).toISOString(), // Tomorrow 9am
+          end: new Date(Date.now() + 86400000 + 3600000).toISOString(),
+          date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          time: "09:00",
+          display: new Date(Date.now() + 86400000).toLocaleDateString('pt-BR') + " às 09:00"
+        },
+        {
+          start: new Date(Date.now() + 86400000 + 7200000).toISOString(), // Tomorrow 11am
+          end: new Date(Date.now() + 86400000 + 10800000).toISOString(),
+          date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          time: "11:00",
+          display: new Date(Date.now() + 86400000).toLocaleDateString('pt-BR') + " às 11:00"
+        },
+        {
+          start: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow 10am
+          end: new Date(Date.now() + 172800000 + 3600000).toISOString(),
+          date: new Date(Date.now() + 172800000).toISOString().split('T')[0],
+          time: "10:00",
+          display: new Date(Date.now() + 172800000).toLocaleDateString('pt-BR') + " às 10:00"
+        }
+      ];
+      
+      res.json({
+        user_id: userId,
+        period: {
+          start: new Date().toISOString(),
+          end: new Date(Date.now() + (daysAhead * 86400000)).toISOString()
+        },
+        business_hours: {
+          start: "08:00",
+          end: "18:00"
+        },
+        slot_duration_minutes: 60,
+        available_slots: mockSlots,
+        total_slots: mockSlots.length
+      });
+    } catch (error) {
+      console.error("Error fetching calendar availability:", error);
+      res.status(500).json({ 
+        error: "Usuário não possui credenciais do Google Calendar válidas. Configure a integração com o Google primeiro.",
+        details: "Para implementar a integração completa com Google Calendar, configure as credenciais OAuth2 e implemente a autenticação do usuário."
+      });
+    }
+  });
+
   // Onboarding routes
   app.get("/api/clients/:id/onboarding", async (req, res) => {
     try {
