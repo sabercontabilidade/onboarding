@@ -88,22 +88,22 @@ export function ClientCard({
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardContent className={`${variant === 'compact' ? 'p-4' : 'p-6'}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 flex-1">
-            <div className={`${variant === 'compact' ? 'w-10 h-10' : 'w-12 h-12'} bg-primary/10 rounded-lg flex items-center justify-center`}>
-              <Building className={`${variant === 'compact' ? 'h-5 w-5' : 'h-6 w-6'} text-primary`} />
+    <Card className={`hover:shadow-md transition-shadow ${variant === 'compact' ? 'max-w-sm' : ''}`}>
+      <CardContent className={`${variant === 'compact' ? 'p-3' : 'p-6'}`}>
+        <div className={`flex ${variant === 'compact' ? 'flex-col gap-3' : 'items-center justify-between'}`}>
+          <div className={`flex items-center ${variant === 'compact' ? 'gap-3 w-full' : 'space-x-4 flex-1'}`}>
+            <div className={`${variant === 'compact' ? 'w-8 h-8 flex-shrink-0' : 'w-12 h-12'} bg-primary/10 rounded-lg flex items-center justify-center`}>
+              <Building className={`${variant === 'compact' ? 'h-4 w-4' : 'h-6 w-6'} text-primary`} />
             </div>
             
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className={`${variant === 'compact' ? 'text-base' : 'text-lg'} font-semibold uppercase`}>
+            <div className="flex-1 min-w-0">
+              <div className={`flex items-center ${variant === 'compact' ? 'gap-2 mb-1' : 'gap-3 mb-2'}`}>
+                <h3 className={`${variant === 'compact' ? 'text-sm' : 'text-lg'} font-semibold uppercase truncate flex-1`}>
                   {client.companyName}
                 </h3>
                 <Badge 
                   variant="secondary" 
-                  className={getStatusColor(client.status)}
+                  className={`${getStatusColor(client.status)} ${variant === 'compact' ? 'text-xs px-1.5 py-0.5 flex-shrink-0' : ''}`}
                 >
                   {getStatusLabel(client.status)}
                 </Badge>
@@ -111,47 +111,54 @@ export function ClientCard({
               
               {/* Progresso do Follow-up - apenas se showProgress for true */}
               {showProgress && (
-                <div className="mb-4 pr-8">
+                <div className={`${variant === 'compact' ? 'mb-2' : 'mb-4'}`}>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                    <span>Progresso do Follow-up</span>
+                    <span className={variant === 'compact' ? 'text-xs' : ''}>Progresso</span>
                     <span className="ml-2">{Math.round(getFollowUpProgress(client))}%</span>
                   </div>
-                  <Progress value={getFollowUpProgress(client)} className="h-1.5 w-full max-w-md" />
+                  <Progress value={getFollowUpProgress(client)} className={`h-1.5 w-full ${variant === 'compact' ? 'max-w-full' : 'max-w-md'}`} />
                 </div>
               )}
               
-              <div className={`flex items-center gap-4 text-sm text-muted-foreground ${variant === 'compact' ? 'flex-col items-start gap-2' : ''}`}>
-                <div className="flex items-center gap-1">
-                  <Building className="h-4 w-4" />
-                  <span>{client.cnpj}</span>
+              <div className={`${variant === 'compact' ? 'space-y-1' : 'flex items-center gap-4'} text-sm text-muted-foreground`}>
+                <div className="flex items-center gap-1 min-w-0">
+                  <Building className={`${variant === 'compact' ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
+                  <span className={`${variant === 'compact' ? 'text-xs truncate' : ''}`}>{client.cnpj}</span>
                 </div>
                 
                 {client.createdAt && (
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium">Cliente cadastrado em:</span>
-                    <span>{dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className={`font-medium ${variant === 'compact' ? 'text-xs' : ''}`}>
+                      {variant === 'compact' ? 'Cadastrado:' : 'Cliente cadastrado em:'}
+                    </span>
+                    <span className={variant === 'compact' ? 'text-xs' : ''}>
+                      {dayjs(client.createdAt).format('DD/MM/YYYY')}
+                    </span>
                   </div>
                 )}
                 
                 {/* Informações adicionais para onboarding */}
                 {showProgress && client.nextAppointment && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>Próximo: {dayjs(client.nextAppointment.scheduledStart).format('DD/MM HH:mm')}</span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <Clock className={`${variant === 'compact' ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
+                    <span className={`${variant === 'compact' ? 'text-xs truncate' : ''}`}>
+                      {variant === 'compact' ? '' : 'Próximo: '}
+                      {dayjs(client.nextAppointment.scheduledStart).format('DD/MM HH:mm')}
+                    </span>
                   </div>
                 )}
                 
                 {showProgress && client.contactName && (
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{client.contactName}</span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <Users className={`${variant === 'compact' ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0`} />
+                    <span className={`${variant === 'compact' ? 'text-xs truncate' : ''}`}>{client.contactName}</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
           
-          <div className={`flex items-center gap-2 ${variant === 'compact' ? 'flex-col gap-1' : ''}`}>
+          <div className={`flex items-center ${variant === 'compact' ? 'gap-1 w-full justify-between' : 'gap-2'}`}>
             {/* Botão Iniciar Onboarding - condicional */}
             {showOnboardingButton && onStartOnboarding && (
               <Button
@@ -160,15 +167,17 @@ export function ClientCard({
                 onClick={() => onStartOnboarding(client.id)}
                 disabled={isStartingOnboarding || client.status === 'onboarding'}
                 data-testid={`button-iniciar-onboarding-${client.id}`}
-                className={variant === 'compact' ? 'text-xs px-2 py-1 h-6' : ''}
+                className={variant === 'compact' ? 'text-xs px-2 py-1 h-6 flex-1 min-w-0' : ''}
               >
-                <Play className={`${variant === 'compact' ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
-                {isStartingOnboarding 
-                  ? 'Iniciando...' 
-                  : client.status === 'onboarding' 
-                    ? 'Onboarding Iniciado' 
-                    : 'Iniciar Onboarding'
-                }
+                <Play className={`${variant === 'compact' ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'} flex-shrink-0`} />
+                <span className={variant === 'compact' ? 'truncate' : ''}>
+                  {isStartingOnboarding 
+                    ? 'Iniciando...' 
+                    : client.status === 'onboarding' 
+                      ? (variant === 'compact' ? 'Iniciado' : 'Onboarding Iniciado') 
+                      : (variant === 'compact' ? 'Iniciar' : 'Iniciar Onboarding')
+                  }
+                </span>
               </Button>
             )}
             
@@ -177,7 +186,7 @@ export function ClientCard({
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className={variant === 'compact' ? 'h-6 w-6 p-0' : 'h-8 w-8 p-0'}
+                  className={`${variant === 'compact' ? 'h-6 w-6 p-0 flex-shrink-0' : 'h-8 w-8 p-0'}`}
                   data-testid={`menu-actions-${client.id}`}
                 >
                   <MoreHorizontal className={variant === 'compact' ? 'h-3 w-3' : 'h-4 w-4'} />
