@@ -316,6 +316,82 @@ Observações: {agendamento.observacoes or 'Nenhuma'}
             return False
     
     @staticmethod
+    def get_available_slots(
+        credentials: Credentials,
+        start_date: datetime,
+        end_date: datetime,
+        business_hours_start: int = 8,
+        business_hours_end: int = 18,
+        slot_duration_minutes: int = 60
+    ) -> List[Dict[str, Any]]:
+        """Consulta slots disponíveis no Google Calendar dentro do horário comercial"""
+        try:
+            service = build('calendar', 'v3', credentials=credentials)
+            
+            # Buscar eventos existentes no período
+            events_result = service.events().list(
+                calendarId='primary',
+                timeMin=start_date.isoformat() + 'Z',
+                timeMax=end_date.isoformat() + 'Z',
+                singleEvents=True,
+                orderBy='startTime'
+            ).execute()
+            
+            events = events_result.get('items', [])
+            
+            # Criar lista de slots disponíveis
+            available_slots = []
+            current_date = start_date.date()
+            
+            while current_date <= end_date.date():
+                # Pular fins de semana (Saturday=5, Sunday=6)
+                if current_date.weekday() >= 5:
+                    current_date += timedelta(days=1)
+                    continue
+                
+                # Verificar cada hora dentro do horário comercial
+                for hour in range(business_hours_start, business_hours_end):
+                    slot_start = datetime.combine(current_date, datetime.min.time().replace(hour=hour))
+                    slot_end = slot_start + timedelta(minutes=slot_duration_minutes)
+                    
+                    # Verificar se já passou (não mostrar horários passados)
+                    if slot_start <= datetime.now():
+                        continue
+                    
+                    # Verificar se não conflita com eventos existentes
+                    is_available = True
+                    for event in events:
+                        event_start = datetime.fromisoformat(event['start'].get('dateTime', event['start'].get('date')).replace('Z', '+00:00'))
+                        event_end = datetime.fromisoformat(event['end'].get('dateTime', event['end'].get('date')).replace('Z', '+00:00'))
+                        
+                        # Remover timezone info para comparação
+                        event_start = event_start.replace(tzinfo=None)
+                        event_end = event_end.replace(tzinfo=None)
+                        
+                        # Verificar sobreposição
+                        if (slot_start < event_end and slot_end > event_start):
+                            is_available = False
+                            break
+                    
+                    if is_available:
+                        available_slots.append({
+                            'start': slot_start.isoformat(),
+                            'end': slot_end.isoformat(),
+                            'date': current_date.strftime('%Y-%m-%d'),
+                            'time': slot_start.strftime('%H:%M'),
+                            'display': slot_start.strftime('%d/%m/%Y às %H:%M')
+                        })
+                
+                current_date += timedelta(days=1)
+            
+            logger.info(f"Encontrados {len(available_slots)} slots disponíveis")
+            return available_slots
+            
+        except Exception as e:
+            logger.error(f"Erro ao consultar disponibilidade: {e}")
+            return []
+
+    @staticmethod
     def send_appointment_email(
         credentials: Credentials,
         agendamento: Agendamento,

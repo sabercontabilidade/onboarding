@@ -12,19 +12,28 @@ import {
   CheckCircle2,
   AlertCircle,
   XCircle,
-  User
+  User,
+  Plus
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Link } from 'wouter'
 import { api } from '@/lib/api'
+import { useToast } from '@/hooks/use-toast'
 import dayjs from '@/lib/dayjs'
 
 export function ClienteAgendamentosPage() {
   const [, params] = useRoute('/cliente-agendamentos/:id')
   const clientId = params?.id
+  const { toast } = useToast()
+  const [selectedStage, setSelectedStage] = useState<any>(null)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [availableSlots, setAvailableSlots] = useState<any[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
 
   const { data: client, isLoading: isLoadingClient } = useQuery({
     queryKey: ['/api/clients', clientId],
@@ -110,6 +119,64 @@ export function ClienteAgendamentosPage() {
     }
 
     return 'pending'
+  }
+
+  const handleScheduleStage = async (stage: any) => {
+    setSelectedStage(stage)
+    setLoadingSlots(true)
+    setShowScheduleModal(true)
+    
+    try {
+      // TODO: Obter o user_id do responsável atual (por enquanto usando 1)
+      const userId = 1
+      const response = await fetch(`/api/v1/agendamentos/disponibilidade/${userId}?days_ahead=14`)
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.detail || 'Erro ao consultar disponibilidade')
+      }
+      
+      const data = await response.json()
+      setAvailableSlots(data.available_slots || [])
+      
+      if (data.available_slots?.length === 0) {
+        toast({
+          title: "Nenhum horário disponível",
+          description: "Não há horários disponíveis no período consultado. Verifique a configuração do Google Calendar.",
+          variant: "destructive"
+        })
+      }
+    } catch (error: any) {
+      console.error('Erro ao consultar disponibilidade:', error)
+      toast({
+        title: "Erro ao consultar disponibilidade",
+        description: error.message || "Não foi possível consultar os horários disponíveis.",
+        variant: "destructive"
+      })
+      setShowScheduleModal(false)
+    } finally {
+      setLoadingSlots(false)
+    }
+  }
+
+  const handleConfirmSchedule = async (slot: any) => {
+    if (!selectedStage || !slot) return
+    
+    try {
+      // TODO: Implementar criação do agendamento
+      toast({
+        title: "Agendamento criado",
+        description: `${selectedStage.name} agendado para ${slot.display}`,
+      })
+      setShowScheduleModal(false)
+      setSelectedStage(null)
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar agendamento",
+        description: error.message || "Não foi possível criar o agendamento.",
+        variant: "destructive"
+      })
+    }
   }
 
   if (isLoadingClient || isLoadingAppointments) {
@@ -249,16 +316,37 @@ export function ClienteAgendamentosPage() {
                           </Badge>
                         )}
                         {status === 'overdue' && (
-                          <Badge className="bg-red-100 text-red-700">
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            Atrasado
-                          </Badge>
+                          <>
+                            <Badge className="bg-red-100 text-red-700">
+                              <AlertCircle className="h-3 w-3 mr-1" />
+                              Atrasado
+                            </Badge>
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleScheduleStage(stage)}
+                              data-testid={`button-schedule-${stage.id}`}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Agendar
+                            </Button>
+                          </>
                         )}
                         {status === 'pending' && (
-                          <Badge variant="outline">
-                            <Clock className="h-3 w-3 mr-1" />
-                            Pendente
-                          </Badge>
+                          <>
+                            <Badge variant="outline">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Pendente
+                            </Badge>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => handleScheduleStage(stage)}
+                              data-testid={`button-schedule-${stage.id}`}
+                            >
+                              <Plus className="h-3 w-3 mr-1" />
+                              Agendar
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -349,6 +437,73 @@ export function ClienteAgendamentosPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Agendamento */}
+      <Dialog open={showScheduleModal} onOpenChange={setShowScheduleModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Agendar {selectedStage?.name}</DialogTitle>
+            <DialogDescription>
+              Selecione um horário disponível dentro do horário comercial (8h às 18h)
+            </DialogDescription>
+          </DialogHeader>
+          
+          <ScrollArea className="h-96">
+            {loadingSlots ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-pulse space-y-4 w-full">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-12 bg-gray-200 rounded"></div>
+                  ))}
+                </div>
+              </div>
+            ) : availableSlots.length > 0 ? (
+              <div className="space-y-2">
+                {availableSlots.map((slot, index) => (
+                  <Card 
+                    key={index} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleConfirmSchedule(slot)}
+                    data-testid={`slot-${index}`}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Calendar className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium">{slot.display}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Duração: 1 hora
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          Selecionar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Nenhum horário disponível</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Não há horários disponíveis no momento. Isso pode indicar que:
+                </p>
+                <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                  <li>As credenciais do Google Calendar não estão configuradas</li>
+                  <li>Todos os horários comerciais estão ocupados</li>
+                  <li>Há um problema na conexão com o Google Calendar</li>
+                </ul>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
