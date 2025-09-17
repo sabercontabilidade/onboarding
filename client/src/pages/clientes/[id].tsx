@@ -362,18 +362,29 @@ export function ClienteDetalhePage() {
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-orange-600">
-                  Plano de Sucesso do Cliente
+                  PLANO DE SUCESSO DO CLIENTE
                 </DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  Preencha as informações para definir os objetivos e expectativas do cliente
-                </p>
               </DialogHeader>
+              
+              {/* Texto explicativo */}
+              <div className="space-y-4 py-4 text-sm text-gray-700 bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <p>
+                  O <strong>Plano de Sucesso do Cliente</strong> é um documento essencial no processo de Customer Success da <strong>SABER Contábil</strong>. Esse formulário deve ser preenchido pelos vendedores <strong>IMEDIATAMENTE</strong> após o fechamento do contrato com um novo cliente. Seu objetivo principal é coletar todas as informações críticas sobre o cliente, garantindo que todos os departamentos da empresa tenham um entendimento claro e detalhado das expectativas, necessidades e desafios desse novo parceiro.
+                </p>
+                <p>
+                  <strong>CLIENTES ODEIAM RESPONDER AS MESMAS PERGUNTAS PARA PESSOAS DIFERENTES!</strong> Portanto, o formulário deve ser preenchido com o máximo de detalhes possíveis.
+                </p>
+                <p>
+                  O documento será de leitura obrigatória para os times Onboarding (Contábil, Fiscal, Departamento Pessoal, Financeiro) e Customer Success. Ele servirá como um mapa estratégico, garantindo que a SABER entregue exatamente aquilo que foi prometido e planejado durante a negociação, assegurando a <strong>SATISFAÇÃO</strong> e <strong>FIDELIZAÇÃO</strong> do cliente.
+                </p>
+              </div>
+              
               <div className="space-y-6 py-4">
                 {/* Informações do Cliente */}
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h3 className="font-medium text-sm text-gray-700 mb-2">Cliente:</h3>
-                  <p className="font-semibold">{client?.companyName}</p>
-                  <p className="text-sm text-muted-foreground">{client?.contactName}</p>
+                  <p className="font-bold text-lg">{client?.companyName}</p>
+                  <p className="text-sm text-gray-600">{client?.cnpj}</p>
                 </div>
 
                 {/* Formulário do Plano de Sucesso */}
