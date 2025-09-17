@@ -48,6 +48,12 @@ export function ClienteAgendamentosPage() {
     enabled: !!clientId,
   })
 
+  const { data: onboardingStages, isLoading: isLoadingOnboarding } = useQuery({
+    queryKey: ['/api/clients', clientId, 'onboarding'],
+    queryFn: () => clientId ? fetch(`/api/clients/${clientId}/onboarding`).then(res => res.json()) : null,
+    enabled: !!clientId,
+  })
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -83,43 +89,47 @@ export function ClienteAgendamentosPage() {
     return labels[status as keyof typeof labels] || status
   }
 
-  // Etapas do onboarding com suas respectivas datas
-  const onboardingStages = [
-    { id: 'plano_sucesso', name: 'Plano de Sucesso do Cliente', days: 0 },
-    { id: 'followup_d3', name: 'Follow-up D+3', days: 3 },
-    { id: 'followup_d5', name: 'Follow-up D+5', days: 5 },
-    { id: 'followup_d15', name: 'Follow-up D+15', days: 15 },
-    { id: 'followup_d50', name: 'Follow-up D+50', days: 50 },
-    { id: 'followup_d80', name: 'Follow-up D+80', days: 80 },
-    { id: 'followup_d100', name: 'Follow-up D+100', days: 100 },
-    { id: 'followup_d180', name: 'Follow-up D+180', days: 180 },
-  ]
+  // As etapas do onboarding agora são carregadas da API
+
+  // Mapeamento de stage types para nomes legíveis
+  const stageNames: Record<string, string> = {
+    'initial_meeting': 'Reunião Inicial',
+    'documentation': 'Coleta de Documentos', 
+    'review': 'Análise e Revisão',
+    'completed': 'Finalização'
+  }
+
+  const getStageDisplayName = (stage: any) => {
+    return stageNames[stage.stage] || stage.stage
+  }
 
   const getExpectedDate = (stage: any) => {
-    if (!client?.createdAt) return null
-    const clientCreatedDate = dayjs(client.createdAt)
-    return clientCreatedDate.add(stage.days, 'day')
+    // Se a etapa tem scheduledDate, usa ela, senão usa a data de criação
+    if (stage.scheduledDate) {
+      return dayjs(stage.scheduledDate)
+    }
+    return stage.createdAt ? dayjs(stage.createdAt) : null
+  }
+
+  // Helper function to check if appointment is active
+  const isAppointmentActive = (apt: any) => {
+    return (apt.status || '').toLowerCase().trim() === 'scheduled'
   }
 
   const getStageStatus = (stage: any) => {
-    const expectedDate = getExpectedDate(stage)
-    if (!expectedDate) return 'pending'
+    // Se a etapa já tem um agendamento relacionado no banco, está agendada
+    if (stage.scheduledDate) {
+      return 'scheduled'
+    }
     
-    const relatedAppointment = appointments?.find((apt: any) => 
-      apt.title.toLowerCase().includes(stage.name.toLowerCase()) ||
-      apt.description?.toLowerCase().includes(stage.name.toLowerCase())
-    )
-
-    if (relatedAppointment) {
-      return relatedAppointment.status
+    // Se está completa, retorna completed
+    if (stage.status === 'completed') {
+      return 'completed'
     }
 
-    // Se passou da data esperada e não tem agendamento, está atrasado
-    if (expectedDate.isBefore(dayjs(), 'day')) {
-      return 'overdue'
-    }
-
-    return 'pending'
+    // Por enquanto, usar apenas o status que vem do banco de dados
+    // TODO: Reimplementar busca por agendamentos relacionados se necessário
+    return stage.status || 'pending'
   }
 
   const handleScheduleStage = async (stage: any) => {
@@ -165,10 +175,11 @@ export function ClienteAgendamentosPage() {
     
     try {
       // Create appointment via API
+      const selectedStageDisplayName = getStageDisplayName(selectedStage)
       const appointmentData = {
         clientId: clientId,
-        title: selectedStage.name,
-        description: `Reunião de onboarding: ${selectedStage.name}`,
+        title: selectedStageDisplayName,
+        description: `Reunião de onboarding: ${selectedStageDisplayName}`,
         scheduledStart: slot.start,
         scheduledEnd: slot.end,
         type: 'onboarding',
@@ -183,7 +194,7 @@ export function ClienteAgendamentosPage() {
       
       toast({
         title: "Agendamento criado",
-        description: `${selectedStage.name} agendado para ${slot.display}`,
+        description: `${selectedStageDisplayName} agendado para ${slot.display}`,
       })
       setShowScheduleModal(false)
       setSelectedStage(null)
@@ -196,7 +207,7 @@ export function ClienteAgendamentosPage() {
     }
   }
 
-  if (isLoadingClient || isLoadingAppointments) {
+  if (isLoadingClient || isLoadingAppointments || isLoadingOnboarding) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse">
@@ -287,10 +298,9 @@ export function ClienteAgendamentosPage() {
                 {onboardingStages.map((stage, index) => {
                   const expectedDate = getExpectedDate(stage)
                   const status = getStageStatus(stage)
-                  const relatedAppointment = appointments?.find((apt: any) => 
-                    apt.title.toLowerCase().includes(stage.name.toLowerCase()) ||
-                    apt.description?.toLowerCase().includes(stage.name.toLowerCase())
-                  )
+                  const stageDisplayName = getStageDisplayName(stage)
+                  // Remover busca por agendamento relacionado por enquanto para debugar
+                  const relatedAppointment = null
 
                   return (
                     <div key={stage.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -300,7 +310,7 @@ export function ClienteAgendamentosPage() {
                         </div>
                         
                         <div>
-                          <h4 className="font-medium">{stage.name}</h4>
+                          <h4 className="font-medium">{stageDisplayName}</h4>
                           <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                             {expectedDate && (
                               <div className="flex items-center gap-1">
