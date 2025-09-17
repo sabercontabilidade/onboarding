@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Link } from 'wouter'
 import { api } from '@/lib/api'
+import { apiRequest, queryClient } from '@/lib/queryClient'
 import { useToast } from '@/hooks/use-toast'
 import dayjs from '@/lib/dayjs'
 
@@ -163,7 +164,23 @@ export function ClienteAgendamentosPage() {
     if (!selectedStage || !slot) return
     
     try {
-      // TODO: Implementar criação do agendamento
+      // Create appointment via API
+      const appointmentData = {
+        clientId: clientId,
+        title: selectedStage.name,
+        description: `Reunião de onboarding: ${selectedStage.name}`,
+        scheduledStart: slot.start,
+        scheduledEnd: slot.end,
+        type: 'onboarding',
+        status: 'scheduled'
+      }
+
+      await apiRequest('POST', '/api/appointments', appointmentData)
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/clients', clientId, 'appointments'] })
+      queryClient.invalidateQueries({ queryKey: ['/api/appointments'] })
+      
       toast({
         title: "Agendamento criado",
         description: `${selectedStage.name} agendado para ${slot.display}`,

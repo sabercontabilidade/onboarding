@@ -149,10 +149,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/appointments", async (req, res) => {
     try {
+      console.log('📝 Received appointment data:', req.body);
+      
+      // Convert date strings to Date objects if necessary
+      if (req.body.scheduledStart && typeof req.body.scheduledStart === 'string') {
+        req.body.scheduledStart = new Date(req.body.scheduledStart);
+      }
+      if (req.body.scheduledEnd && typeof req.body.scheduledEnd === 'string') {
+        req.body.scheduledEnd = new Date(req.body.scheduledEnd);
+      }
+      
       const appointmentData = insertAppointmentSchema.parse(req.body);
+      console.log('✅ Parsed appointment data:', appointmentData);
       const appointment = await storage.createAppointment(appointmentData);
       res.status(201).json(appointment);
     } catch (error) {
+      console.error('❌ Appointment creation error:', error);
       res.status(400).json({ error: "Invalid appointment data" });
     }
   });
@@ -295,6 +307,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(visits);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch client visits" });
+    }
+  });
+
+  app.get("/api/clients/:id/appointments", async (req, res) => {
+    try {
+      const appointments = await storage.getAppointments(req.params.id);
+      res.json(appointments);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch client appointments" });
     }
   });
 
