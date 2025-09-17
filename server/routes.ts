@@ -286,6 +286,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const appointments = await storage.getAppointments();
       const visits = await storage.getVisits();
       
+      // Debug logs
+      console.log("🔍 Debug Dashboard Metrics:");
+      console.log("Total clients found:", clients.length);
+      console.log("Clients data:", clients.map(c => ({ id: c.id, name: c.companyName, status: c.status })));
+      
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);

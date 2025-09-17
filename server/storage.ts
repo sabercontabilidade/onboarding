@@ -1,4 +1,6 @@
-import { type User, type InsertUser, type Client, type InsertClient, type OnboardingStage, type InsertOnboardingStage, type Appointment, type InsertAppointment, type Activity, type InsertActivity, type Integration, type InsertIntegration, type Visit, type InsertVisit, type ClientWithDetails, type AppointmentWithDetails, type ActivityWithDetails, type DashboardMetrics } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type OnboardingStage, type InsertOnboardingStage, type Appointment, type InsertAppointment, type Activity, type InsertActivity, type Integration, type InsertIntegration, type Visit, type InsertVisit, type ClientWithDetails, type AppointmentWithDetails, type ActivityWithDetails, type DashboardMetrics, users, clients, onboardingStages, appointments, activities, integrations, visits } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, asc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 // Função para formatar CNPJ
@@ -97,7 +99,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id, createdAt: new Date() };
+    const user: User = { 
+      ...insertUser, 
+      id, 
+      role: insertUser.role || "contador",
+      createdAt: new Date() 
+    };
     this.users.set(id, user);
     return user;
   }
@@ -114,7 +121,7 @@ export class MemStorage implements IStorage {
       const searchLower = search.toLowerCase();
       clients = clients.filter(client => 
         client.companyName.toLowerCase().includes(searchLower) ||
-        client.cnpj.toLowerCase().includes(searchLower) ||
+        (client.cnpj && client.cnpj.toLowerCase().includes(searchLower)) ||
         (client.contactName && client.contactName.toLowerCase().includes(searchLower)) ||
         (client.contactEmail && client.contactEmail.toLowerCase().includes(searchLower))
       );
@@ -127,7 +134,9 @@ export class MemStorage implements IStorage {
       const stages = Array.from(this.onboardingStages.values()).filter(s => s.clientId === client.id);
       const currentStage = stages.find(s => s.status !== "completed");
       const clientActivities = Array.from(this.activities.values()).filter(a => a.clientId === client.id);
-      const lastActivity = clientActivities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+      const lastActivity = clientActivities
+        .filter(a => a.createdAt)
+        .sort((a, b) => (b.createdAt!.getTime() - a.createdAt!.getTime()))[0];
       const clientAppointments = Array.from(this.appointments.values()).filter(a => a.clientId === client.id && a.scheduledStart > new Date());
       const nextAppointment = clientAppointments.sort((a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime())[0];
 
@@ -155,7 +164,9 @@ export class MemStorage implements IStorage {
     const stages = Array.from(this.onboardingStages.values()).filter(s => s.clientId === client.id);
     const currentStage = stages.find(s => s.status !== "completed");
     const clientActivities = Array.from(this.activities.values()).filter(a => a.clientId === client.id);
-    const lastActivity = clientActivities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+    const lastActivity = clientActivities
+      .filter(a => a.createdAt)
+      .sort((a, b) => (b.createdAt!.getTime() - a.createdAt!.getTime()))[0];
     const clientAppointments = Array.from(this.appointments.values()).filter(a => a.clientId === client.id && a.scheduledStart > new Date());
     const nextAppointment = clientAppointments.sort((a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime())[0];
 
@@ -185,7 +196,11 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const client: Client = {
       ...insertClient,
-      cnpj: formatCnpj(insertClient.cnpj), // Formatar CNPJ antes de salvar
+      cnpj: formatCnpj(insertClient.cnpj || null), // Formatar CNPJ antes de salvar
+      status: insertClient.status || "pending",
+      sector: insertClient.sector || null,
+      assigneeId: insertClient.assigneeId || null,
+      notes: insertClient.notes || null,
       id,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -302,6 +317,10 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const stage: OnboardingStage = {
       ...insertStage,
+      status: insertStage.status || "pending",
+      notes: insertStage.notes || null,
+      scheduledDate: insertStage.scheduledDate || null,
+      completedDate: insertStage.completedDate || null,
       id,
       createdAt: new Date(),
     };
@@ -347,6 +366,12 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const appointment: Appointment = {
       ...insertAppointment,
+      status: insertAppointment.status || "scheduled",
+      assigneeId: insertAppointment.assigneeId || null,
+      description: insertAppointment.description || null,
+      location: insertAppointment.location || null,
+      meetingUrl: insertAppointment.meetingUrl || null,
+      googleEventId: insertAppointment.googleEventId || null,
       id,
       createdAt: new Date(),
     };
@@ -386,7 +411,8 @@ export class MemStorage implements IStorage {
 
   async getRecentActivities(limit = 10): Promise<ActivityWithDetails[]> {
     const activities = Array.from(this.activities.values())
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .filter(a => a.createdAt)
+      .sort((a, b) => (b.createdAt!.getTime() - a.createdAt!.getTime()))
       .slice(0, limit);
 
     return activities.map(activity => {
@@ -400,6 +426,9 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const activity: Activity = {
       ...insertActivity,
+      clientId: insertActivity.clientId || null,
+      userId: insertActivity.userId || null,
+      metadata: insertActivity.metadata || null,
       id,
       createdAt: new Date(),
     };
@@ -419,6 +448,9 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const integration: Integration = {
       ...insertIntegration,
+      status: insertIntegration.status || "disconnected",
+      credentials: insertIntegration.credentials || null,
+      lastSync: insertIntegration.lastSync || null,
       id,
       createdAt: new Date(),
     };
@@ -444,6 +476,14 @@ export class MemStorage implements IStorage {
     const id = randomUUID();
     const visit: Visit = {
       ...insertVisit,
+      type: insertVisit.type || "technical_visit",
+      status: insertVisit.status || "completed",
+      location: insertVisit.location || null,
+      decisions: insertVisit.decisions || null,
+      pending_actions: insertVisit.pending_actions || null,
+      satisfaction_rating: insertVisit.satisfaction_rating || null,
+      attachments: insertVisit.attachments || null,
+      notes: insertVisit.notes || null,
       id,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -507,4 +547,473 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+export class DatabaseStorage implements IStorage {
+  // User methods
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  // Client methods
+  async getClients(): Promise<Client[]> {
+    return await db.select().from(clients).orderBy(desc(clients.createdAt));
+  }
+
+  async getClient(id: string): Promise<Client | undefined> {
+    const [client] = await db.select().from(clients).where(eq(clients.id, id));
+    return client || undefined;
+  }
+
+  async getClientsWithDetails(search?: string): Promise<ClientWithDetails[]> {
+    const clientsData = await db.select().from(clients).orderBy(desc(clients.createdAt));
+    const clientsWithDetails: ClientWithDetails[] = [];
+
+    for (const client of clientsData) {
+      // Get assignee
+      const assignee = client.assigneeId 
+        ? (await db.select().from(users).where(eq(users.id, client.assigneeId)))[0]
+        : undefined;
+
+      // Get current stage
+      const stages = await db.select().from(onboardingStages).where(eq(onboardingStages.clientId, client.id));
+      const currentStage = stages.find(s => s.status !== "completed");
+
+      // Get last activity
+      const lastActivityList = await db.select().from(activities)
+        .where(eq(activities.clientId, client.id))
+        .orderBy(desc(activities.createdAt))
+        .limit(1);
+      const lastActivity = lastActivityList[0];
+
+      // Get next appointment
+      const nextAppointmentList = await db.select().from(appointments)
+        .where(and(eq(appointments.clientId, client.id)))
+        .orderBy(asc(appointments.scheduledStart))
+        .limit(1);
+      const nextAppointment = nextAppointmentList[0];
+
+      clientsWithDetails.push({
+        ...client,
+        assignee,
+        currentStage,
+        lastActivity,
+        nextAppointment,
+      });
+    }
+
+    return clientsWithDetails;
+  }
+
+  async getClientWithDetails(id: string): Promise<ClientWithDetails | undefined> {
+    const client = await this.getClient(id);
+    if (!client) return undefined;
+
+    const assignee = client.assigneeId 
+      ? (await db.select().from(users).where(eq(users.id, client.assigneeId)))[0]
+      : undefined;
+
+    const stages = await db.select().from(onboardingStages).where(eq(onboardingStages.clientId, client.id));
+    const currentStage = stages.find(s => s.status !== "completed");
+
+    const clientActivities = await db.select().from(activities)
+      .where(eq(activities.clientId, client.id))
+      .orderBy(desc(activities.createdAt));
+    const lastActivity = clientActivities[0];
+
+    const clientAppointments = await db.select().from(appointments)
+      .where(and(eq(appointments.clientId, client.id)))
+      .orderBy(asc(appointments.scheduledStart));
+    const nextAppointment = clientAppointments[0];
+
+    return {
+      ...client,
+      assignee,
+      currentStage,
+      lastActivity,
+      nextAppointment,
+    };
+  }
+
+  async createClient(insertClient: InsertClient): Promise<Client> {
+    // Verificar se já existe cliente com o mesmo CNPJ (normalizado)
+    if (insertClient.cnpj) {
+      const normalizedNewCnpj = insertClient.cnpj.replace(/\D/g, '');
+      const existingClients = await db.select().from(clients);
+      const existingClient = existingClients.find(
+        client => client.cnpj && client.cnpj.replace(/\D/g, '') === normalizedNewCnpj
+      );
+      if (existingClient) {
+        const error = new Error(`Cliente com CNPJ ${insertClient.cnpj} já está cadastrado`);
+        (error as any).code = 'DUPLICATE_CNPJ';
+        throw error;
+      }
+    }
+
+    const clientData = {
+      ...insertClient,
+      cnpj: formatCnpj(insertClient.cnpj || null), // Formatar CNPJ antes de salvar
+    };
+
+    const [client] = await db.insert(clients).values(clientData).returning();
+
+    // Create activity for client creation
+    await this.createActivity({
+      clientId: client.id,
+      userId: insertClient.assigneeId,
+      type: "client_created",
+      description: `Cliente ${insertClient.companyName} adicionado ao sistema`,
+    });
+
+    return client;
+  }
+
+  async updateClient(id: string, updates: Partial<InsertClient>): Promise<Client> {
+    const updateData = {
+      ...updates,
+      cnpj: updates.cnpj !== undefined ? formatCnpj(updates.cnpj) : undefined,
+    };
+    
+    // Remove undefined values
+    const cleanData = Object.fromEntries(
+      Object.entries(updateData).filter(([_, value]) => value !== undefined)
+    );
+
+    const [client] = await db.update(clients)
+      .set(cleanData)
+      .where(eq(clients.id, id))
+      .returning();
+    
+    if (!client) throw new Error("Client not found");
+    return client;
+  }
+
+  async deleteClient(id: string): Promise<void> {
+    await db.delete(clients).where(eq(clients.id, id));
+  }
+
+  // Continue with other methods... (implementar nos próximos edits)
+  // Onboarding methods
+  async getOnboardingStages(clientId: string): Promise<OnboardingStage[]> {
+    return await db.select().from(onboardingStages)
+      .where(eq(onboardingStages.clientId, clientId))
+      .orderBy(asc(onboardingStages.createdAt));
+  }
+
+  async createOnboardingStage(insertStage: InsertOnboardingStage): Promise<OnboardingStage> {
+    const [stage] = await db.insert(onboardingStages).values(insertStage).returning();
+    return stage;
+  }
+
+  async updateOnboardingStage(id: string, updates: Partial<InsertOnboardingStage>): Promise<OnboardingStage> {
+    const [stage] = await db.update(onboardingStages)
+      .set(updates)
+      .where(eq(onboardingStages.id, id))
+      .returning();
+    
+    if (!stage) throw new Error("Onboarding stage not found");
+    return stage;
+  }
+
+  // Appointment methods
+  async getAppointments(): Promise<Appointment[]> {
+    return await db.select().from(appointments).orderBy(desc(appointments.createdAt));
+  }
+
+  async getAppointmentsWithDetails(): Promise<AppointmentWithDetails[]> {
+    const appointmentsData = await db.select().from(appointments).orderBy(asc(appointments.scheduledStart));
+    const appointmentsWithDetails: AppointmentWithDetails[] = [];
+
+    for (const appointment of appointmentsData) {
+      const client = appointment.clientId 
+        ? (await db.select().from(clients).where(eq(clients.id, appointment.clientId)))[0]
+        : undefined;
+      
+      const assignee = appointment.assigneeId 
+        ? (await db.select().from(users).where(eq(users.id, appointment.assigneeId)))[0]
+        : undefined;
+
+      if (client) {
+        appointmentsWithDetails.push({
+          ...appointment,
+          client,
+          assignee,
+        });
+      }
+    }
+
+    return appointmentsWithDetails;
+  }
+
+  async getUpcomingAppointments(limit?: number): Promise<AppointmentWithDetails[]> {
+    const now = new Date();
+    const appointmentsData = await db.select().from(appointments)
+      .orderBy(asc(appointments.scheduledStart))
+      .limit(limit || 10);
+    
+    const upcomingAppointments = appointmentsData.filter(apt => apt.scheduledStart > now);
+    const appointmentsWithDetails: AppointmentWithDetails[] = [];
+
+    for (const appointment of upcomingAppointments) {
+      const client = appointment.clientId 
+        ? (await db.select().from(clients).where(eq(clients.id, appointment.clientId)))[0]
+        : undefined;
+      
+      const assignee = appointment.assigneeId 
+        ? (await db.select().from(users).where(eq(users.id, appointment.assigneeId)))[0]
+        : undefined;
+
+      if (client) {
+        appointmentsWithDetails.push({
+          ...appointment,
+          client,
+          assignee,
+        });
+      }
+    }
+
+    return appointmentsWithDetails.slice(0, limit || 10);
+  }
+
+  async getAppointment(id: string): Promise<Appointment | undefined> {
+    const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
+    return appointment || undefined;
+  }
+
+  async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
+    const [appointment] = await db.insert(appointments).values(insertAppointment).returning();
+    return appointment;
+  }
+
+  async updateAppointment(id: string, updates: Partial<InsertAppointment>): Promise<Appointment> {
+    const [appointment] = await db.update(appointments)
+      .set(updates)
+      .where(eq(appointments.id, id))
+      .returning();
+    
+    if (!appointment) throw new Error("Appointment not found");
+    return appointment;
+  }
+
+  async deleteAppointment(id: string): Promise<void> {
+    await db.delete(appointments).where(eq(appointments.id, id));
+  }
+
+  // Activity methods
+  async getActivities(clientId?: string): Promise<Activity[]> {
+    if (clientId) {
+      return await db.select().from(activities)
+        .where(eq(activities.clientId, clientId))
+        .orderBy(desc(activities.createdAt));
+    }
+    return await db.select().from(activities).orderBy(desc(activities.createdAt));
+  }
+
+  async getRecentActivities(limit?: number): Promise<ActivityWithDetails[]> {
+    const activitiesData = await db.select().from(activities)
+      .orderBy(desc(activities.createdAt))
+      .limit(limit || 10);
+    
+    const activitiesWithDetails: ActivityWithDetails[] = [];
+
+    for (const activity of activitiesData) {
+      const client = activity.clientId 
+        ? (await db.select().from(clients).where(eq(clients.id, activity.clientId)))[0]
+        : undefined;
+      
+      const user = activity.userId 
+        ? (await db.select().from(users).where(eq(users.id, activity.userId)))[0]
+        : undefined;
+
+      activitiesWithDetails.push({
+        ...activity,
+        client,
+        user,
+      });
+    }
+
+    return activitiesWithDetails;
+  }
+
+  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
+    const [activity] = await db.insert(activities).values(insertActivity).returning();
+    return activity;
+  }
+
+  // Integration methods
+  async getIntegrations(): Promise<Integration[]> {
+    return await db.select().from(integrations).orderBy(desc(integrations.createdAt));
+  }
+
+  async getIntegration(name: string): Promise<Integration | undefined> {
+    const [integration] = await db.select().from(integrations).where(eq(integrations.name, name));
+    return integration || undefined;
+  }
+
+  async createIntegration(insertIntegration: InsertIntegration): Promise<Integration> {
+    const [integration] = await db.insert(integrations).values(insertIntegration).returning();
+    return integration;
+  }
+
+  async updateIntegration(id: string, updates: Partial<InsertIntegration>): Promise<Integration> {
+    const [integration] = await db.update(integrations)
+      .set(updates)
+      .where(eq(integrations.id, id))
+      .returning();
+    
+    if (!integration) throw new Error("Integration not found");
+    return integration;
+  }
+
+  // Visit methods
+  async getVisits(clientId?: string): Promise<Visit[]> {
+    if (clientId) {
+      return await db.select().from(visits)
+        .where(eq(visits.clientId, clientId))
+        .orderBy(desc(visits.createdAt));
+    }
+    return await db.select().from(visits).orderBy(desc(visits.createdAt));
+  }
+
+  async createVisit(insertVisit: InsertVisit): Promise<Visit> {
+    const [visit] = await db.insert(visits).values(insertVisit).returning();
+    return visit;
+  }
+
+  async updateVisit(id: string, updates: Partial<InsertVisit>): Promise<Visit> {
+    const [visit] = await db.update(visits)
+      .set(updates)
+      .where(eq(visits.id, id))
+      .returning();
+    
+    if (!visit) throw new Error("Visit not found");
+    return visit;
+  }
+
+  async deleteVisit(id: string): Promise<void> {
+    await db.delete(visits).where(eq(visits.id, id));
+  }
+
+  // Dashboard methods
+  async getDashboardMetrics(): Promise<DashboardMetrics> {
+    const clientsData = await this.getClientsWithDetails();
+    const upcomingAppointments = await this.getUpcomingAppointments(5);
+    const recentActivities = await this.getRecentActivities(5);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayMeetings = upcomingAppointments.filter(
+      a => a.scheduledStart >= today && a.scheduledStart < tomorrow
+    ).length;
+
+    const scheduledVisits = upcomingAppointments.filter(
+      a => a.type === "visit"
+    ).length;
+
+    return {
+      activeClients: clientsData.filter(c => c.status === "active").length,
+      onboardingClients: clientsData.filter(c => c.status === "onboarding").length,
+      todayMeetings,
+      scheduledVisits,
+      onboardingClientsList: clientsData.filter(c => c.status === "onboarding").slice(0, 3),
+      upcomingAppointments: upcomingAppointments.slice(0, 3),
+      recentActivities: recentActivities.slice(0, 4),
+    };
+  }
+
+  // Método para iniciar onboarding
+  async startOnboarding(clientId: string, assigneeId?: string): Promise<void> {
+    // Verificar se cliente existe
+    const client = await this.getClient(clientId);
+    if (!client) throw new Error("Cliente não encontrado");
+    
+    // Verificar se o cliente já tem status 'onboarding'
+    if (client.status === 'onboarding') {
+      throw new Error("Onboarding já foi iniciado para este cliente");
+    }
+
+    // Atualizar status do cliente para 'onboarding'
+    await this.updateClient(clientId, { status: 'onboarding' });
+
+    // Criar etapa inicial de onboarding
+    await this.createOnboardingStage({
+      clientId: clientId,
+      stage: "initial_meeting",
+      status: "pending",
+    });
+
+    // Criar agendamento inicial (1 semana a partir de hoje)
+    const appointmentDate = new Date();
+    appointmentDate.setDate(appointmentDate.getDate() + 7);
+    const appointmentEndDate = new Date(appointmentDate);
+    appointmentEndDate.setHours(appointmentEndDate.getHours() + 1);
+
+    await this.createAppointment({
+      clientId: clientId,
+      assigneeId: assigneeId || client.assigneeId,
+      title: `Reunião Inicial - ${client.companyName}`,
+      description: 'Reunião inicial do processo de onboarding',
+      type: 'meeting',
+      scheduledStart: appointmentDate,
+      scheduledEnd: appointmentEndDate,
+      status: 'scheduled',
+      location: null,
+      meetingUrl: null,
+      googleEventId: null,
+    });
+
+    // Criar atividade
+    await this.createActivity({
+      clientId: clientId,
+      userId: assigneeId || client.assigneeId,
+      type: "onboarding_started",
+      description: `Processo de onboarding iniciado para ${client.companyName}`,
+    });
+  }
+
+  async resetOnboarding(clientId: string): Promise<void> {
+    // Limpar todas as etapas de onboarding para este cliente
+    await db.delete(onboardingStages).where(eq(onboardingStages.clientId, clientId));
+    
+    // Voltar status do cliente para 'pending'
+    await this.updateClient(clientId, { status: 'pending' });
+  }
+}
+
+// Initialize default user on app start
+async function initializeDefaultUser() {
+  try {
+    const existingUser = await db.select().from(users).where(eq(users.username, "admin")).limit(1);
+    
+    if (existingUser.length === 0) {
+      await db.insert(users).values({
+        username: "admin",
+        password: "admin123",
+        name: "João Silva",
+        email: "joao@saber.com.br",
+        role: "contador",
+      });
+      console.log("✅ Default user created");
+    }
+  } catch (error) {
+    console.log("❌ Error creating default user:", error);
+  }
+}
+
+// Call initialization
+initializeDefaultUser();
+
+export const storage = new DatabaseStorage();
