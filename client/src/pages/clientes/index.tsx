@@ -221,11 +221,16 @@ export function ClientesPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => startOnboardingMutation.mutate(client.id)}
-                      disabled={startOnboardingMutation.isPending}
+                      disabled={startOnboardingMutation.isPending || client.status === 'onboarding'}
                       data-testid={`button-iniciar-onboarding-${client.id}`}
                     >
                       <Play className="h-4 w-4 mr-2" />
-                      {startOnboardingMutation.isPending ? 'Iniciando...' : 'Iniciar Onboarding'}
+                      {startOnboardingMutation.isPending 
+                        ? 'Iniciando...' 
+                        : client.status === 'onboarding' 
+                          ? 'Onboarding Iniciado' 
+                          : 'Iniciar Onboarding'
+                      }
                     </Button>
                     
                     <DropdownMenu>
