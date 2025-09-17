@@ -190,7 +190,7 @@ export function ClientesPage() {
                     
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold">{client.companyName}</h3>
+                        <h3 className="text-lg font-semibold uppercase">{client.companyName}</h3>
                         <Badge 
                           variant="secondary" 
                           className={getStatusColor(client.status)}

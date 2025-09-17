@@ -187,8 +187,8 @@ export function VisitasPage() {
                     </div>
                     
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-semibold">{client.companyName}</h3>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold uppercase">{client.companyName}</h3>
                         <Badge 
                           variant="secondary" 
                           className={client.status === 'active' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'}
@@ -197,23 +197,18 @@ export function VisitasPage() {
                         </Badge>
                       </div>
                       
-                      
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>Cadastrado em {dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
+                          <Building className="h-4 w-4" />
+                          <span>{client.cnpj}</span>
                         </div>
                         
-                        {client.contactName && (
+                        {client.createdAt && (
                           <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            <span>{client.contactName}</span>
+                            <span className="font-medium">Cliente cadastrado em:</span>
+                            <span>{dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
                           </div>
                         )}
-
-                        <div className="flex items-center gap-1">
-                          <span>CNPJ: {client.cnpj}</span>
-                        </div>
                       </div>
                     </div>
                   </div>
