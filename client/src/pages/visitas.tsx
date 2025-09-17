@@ -18,6 +18,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ViewToggle, type ViewType } from '@/components/ui/view-toggle'
+import { ClientCard } from '@/components/client-card'
+import { KanbanView } from '@/components/kanban-view'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
@@ -28,6 +31,7 @@ import { Link } from 'wouter'
 export function VisitasPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [currentView, setCurrentView] = useState<ViewType>('list')
 
   // Buscar clientes da API
   const { data: clients, isLoading: isLoadingClients } = useQuery({
@@ -37,35 +41,7 @@ export function VisitasPage() {
 
   const allClients = clients || []
   
-  // Função para calcular progresso do follow-up
-  const getFollowUpProgress = (client: any) => {
-    const followUpStages = ['inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
-    const completedStagesKey = `completedStages_${client.id}`
-    const completedStagesStr = localStorage.getItem(completedStagesKey) || '[]'
-    const completedStages = JSON.parse(completedStagesStr)
-    const completedStagesCount = completedStages.length
-    
-    return (completedStagesCount / followUpStages.length) * 100
-  }
-
-  const getStageLabel = (stage: string) => {
-    const labels = {
-      'initial_meeting': 'Reunião Inicial',
-      'documentation': 'Documentação',
-      'review': 'Revisão',
-      'completed': 'Concluído'
-    }
-    return labels[stage as keyof typeof labels] || stage
-  }
-
-  const getStageColor = (status: string) => {
-    const colors = {
-      'pending': 'bg-gray-100 text-gray-700',
-      'in_progress': 'bg-orange-100 text-orange-700',
-      'completed': 'bg-orange-50 text-orange-600',
-    }
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700'
-  }
+  // Estas funções foram movidas para o ClientCard component
 
   // Buscar visitas da API
   const { data: allVisits, refetch: refetchVisits } = useQuery({
@@ -121,6 +97,10 @@ export function VisitasPage() {
                 <SelectItem value="Suporte">Suporte</SelectItem>
               </SelectContent>
             </Select>
+            <ViewToggle
+              currentView={currentView}
+              onViewChange={setCurrentView}
+            />
           </div>
         </CardContent>
       </Card>
@@ -158,7 +138,7 @@ export function VisitasPage() {
 
       {/* Lista de Clientes */}
       {isLoadingClients ? (
-        <div className="grid gap-4">
+        <div className={currentView === 'kanban' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' : 'grid gap-4'}>
           {[...Array(3)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
@@ -175,53 +155,22 @@ export function VisitasPage() {
           ))}
         </div>
       ) : allClients.length > 0 ? (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Clientes</h2>
-          {allClients.map((client: any) => (
-            <Card key={client.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Building className="h-6 w-6 text-primary" />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold uppercase">{client.companyName}</h3>
-                        <Badge 
-                          variant="secondary" 
-                          className={client.status === 'active' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700'}
-                        >
-                          {client.status === 'active' ? 'Ativo' : client.status === 'onboarding' ? 'Onboarding' : client.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Building className="h-4 w-4" />
-                          <span>{client.cnpj}</span>
-                        </div>
-                        
-                        {client.createdAt && (
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">Cliente cadastrado em:</span>
-                            <span>{dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Link href={`/clientes/${client.id}/visitas`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div data-testid="visitas-clients-content">
+          <h2 className="text-xl font-semibold mb-4">Clientes</h2>
+          {currentView === 'list' ? (
+            <div className="space-y-4" data-testid="list-view">
+              {allClients.map((client: any) => (
+                <ClientCard
+                  key={client.id}
+                  client={client}
+                />
+              ))}
+            </div>
+          ) : (
+            <KanbanView
+              clients={allClients}
+            />
+          )}
         </div>
       ) : (
         <Card>

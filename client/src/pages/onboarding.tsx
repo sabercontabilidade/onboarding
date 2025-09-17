@@ -14,6 +14,9 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ViewToggle, type ViewType } from '@/components/ui/view-toggle'
+import { ClientCard } from '@/components/client-card'
+import { KanbanView } from '@/components/kanban-view'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { api } from '@/lib/api'
@@ -21,6 +24,7 @@ import dayjs from '@/lib/dayjs'
 
 export function OnboardingPage() {
   const [refreshKey, setRefreshKey] = useState(0)
+  const [currentView, setCurrentView] = useState<ViewType>('list')
   const [, setLocation] = useLocation()
   
   const { data: clients, isLoading } = useQuery({
@@ -66,24 +70,7 @@ export function OnboardingPage() {
     return onboardingClients.filter(client => getFollowUpProgress(client) === 100).length
   }
 
-  const getStageLabel = (stage: string) => {
-    const labels = {
-      'initial_meeting': 'Reunião Inicial',
-      'documentation': 'Documentação',
-      'review': 'Revisão',
-      'completed': 'Concluído'
-    }
-    return labels[stage as keyof typeof labels] || stage
-  }
-
-  const getStageColor = (status: string) => {
-    const colors = {
-      'pending': 'bg-gray-100 text-gray-700',
-      'in_progress': 'bg-blue-100 text-blue-700',
-      'completed': 'bg-green-100 text-green-700',
-    }
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700'
-  }
+  // Estas funções foram movidas para o ClientCard component
 
   return (
     <div className="space-y-6">
@@ -94,10 +81,16 @@ export function OnboardingPage() {
             Acompanhe o progresso de onboarding dos novos clientes
           </p>
         </div>
-        <Button variant="outline" onClick={() => setLocation('/clientes')}>
-          <Users className="mr-2 h-4 w-4" />
-          Ver Todos os Clientes
-        </Button>
+        <div className="flex items-center gap-3">
+          <ViewToggle
+            currentView={currentView}
+            onViewChange={setCurrentView}
+          />
+          <Button variant="outline" onClick={() => setLocation('/clientes')}>
+            <Users className="mr-2 h-4 w-4" />
+            Ver Todos os Clientes
+          </Button>
+        </div>
       </div>
 
       {/* Estatísticas */}
@@ -167,7 +160,7 @@ export function OnboardingPage() {
 
       {/* Lista de Clientes em Onboarding */}
       {isLoading ? (
-        <div className="grid gap-4">
+        <div className={currentView === 'kanban' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' : 'grid gap-4'}>
           {[...Array(3)].map((_, i) => (
             <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
@@ -184,68 +177,23 @@ export function OnboardingPage() {
           ))}
         </div>
       ) : onboardingClients.length > 0 ? (
-        <div className="space-y-4">
-          {onboardingClients.map((client: any) => (
-            <Card key={client.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Building className="h-6 w-6 text-primary" />
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-semibold">{client.companyName}</h3>
-                        {client.currentStage && (
-                          <Badge 
-                            variant="secondary" 
-                            className={getStageColor(client.currentStage.status)}
-                          >
-                            {getStageLabel(client.currentStage.stage)}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {/* Progresso */}
-                      <div className="mb-4 pr-8">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                          <span>Progresso do Follow-up</span>
-                          <span className="ml-2">{Math.round(getFollowUpProgress(client))}%</span>
-                        </div>
-                        <Progress value={getFollowUpProgress(client)} className="h-1.5 w-full max-w-md" />
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>Iniciado em {dayjs(client.createdAt).format('DD/MM/YYYY')}</span>
-                        </div>
-                        
-                        {client.nextAppointment && (
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>Próximo: {dayjs(client.nextAppointment.scheduledStart).format('DD/MM HH:mm')}</span>
-                          </div>
-                        )}
-                        
-                        {client.contactName && (
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            <span>{client.contactName}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <Button variant="outline" size="sm" onClick={() => setLocation(`/clientes/${client.id}`)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div data-testid="onboarding-clients-content">
+          {currentView === 'list' ? (
+            <div className="space-y-4" data-testid="list-view">
+              {onboardingClients.map((client: any) => (
+                <ClientCard
+                  key={client.id}
+                  client={client}
+                  showProgress={true}
+                />
+              ))}
+            </div>
+          ) : (
+            <KanbanView
+              clients={onboardingClients}
+              showProgress={true}
+            />
+          )}
         </div>
       ) : (
         <Card>
