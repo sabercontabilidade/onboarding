@@ -120,7 +120,7 @@ export function ClientCard({
                 </div>
               )}
               
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <div className={`flex items-center gap-4 text-sm text-muted-foreground ${variant === 'compact' ? 'flex-col items-start gap-2' : ''}`}>
                 <div className="flex items-center gap-1">
                   <Building className="h-4 w-4" />
                   <span>{client.cnpj}</span>
@@ -151,7 +151,7 @@ export function ClientCard({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-2 ${variant === 'compact' ? 'flex-col gap-1' : ''}`}>
             {/* Botão Iniciar Onboarding - condicional */}
             {showOnboardingButton && onStartOnboarding && (
               <Button
@@ -160,8 +160,9 @@ export function ClientCard({
                 onClick={() => onStartOnboarding(client.id)}
                 disabled={isStartingOnboarding || client.status === 'onboarding'}
                 data-testid={`button-iniciar-onboarding-${client.id}`}
+                className={variant === 'compact' ? 'text-xs px-2 py-1 h-6' : ''}
               >
-                <Play className="h-4 w-4 mr-2" />
+                <Play className={`${variant === 'compact' ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
                 {isStartingOnboarding 
                   ? 'Iniciando...' 
                   : client.status === 'onboarding' 
@@ -171,68 +172,61 @@ export function ClientCard({
               </Button>
             )}
             
-            {/* Botão Ver Detalhes - sempre presente em algumas páginas */}
-            {!showOnboardingButton && (
-              <Link href={`/clientes/${client.id}`}>
-                <Button variant="outline" size="sm">
-                  <Eye className="h-4 w-4" />
+            {/* Sempre mostrar menu dropdown para ações */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className={variant === 'compact' ? 'h-6 w-6 p-0' : 'h-8 w-8 p-0'}
+                  data-testid={`menu-actions-${client.id}`}
+                >
+                  <MoreHorizontal className={variant === 'compact' ? 'h-3 w-3' : 'h-4 w-4'} />
                 </Button>
-              </Link>
-            )}
-            
-            {/* Menu dropdown - apenas se tiver onDelete ou showOnboardingButton */}
-            {(onDelete || showOnboardingButton) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
-                    <Link href={`/clientes/${client.id}`}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      Ver detalhes
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href={`/clientes/${client.id}/editar`}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Editar
-                    </Link>
-                  </DropdownMenuItem>
-                  {onDelete && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza de que deseja excluir o cliente "{client.companyName}"? 
-                            Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => onDelete(client.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                            disabled={isDeletingClient}
-                          >
-                            {isDeletingClient ? 'Excluindo...' : 'Excluir'}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href={`/clientes/${client.id}`}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Ver detalhes
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/clientes/${client.id}/editar`}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
+                  </Link>
+                </DropdownMenuItem>
+                {onDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DropdownMenuItem className="text-red-600" onSelect={(e) => e.preventDefault()}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza de que deseja excluir o cliente "{client.companyName}"? 
+                          Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onDelete(client.id)}
+                          className="bg-red-600 hover:bg-red-700"
+                          disabled={isDeletingClient}
+                        >
+                          {isDeletingClient ? 'Excluindo...' : 'Excluir'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardContent>
