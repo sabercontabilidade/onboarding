@@ -184,6 +184,43 @@ export function ClienteDetalhePage() {
     return completedStages.includes('plano_sucesso')
   }
 
+  // Verificar se uma etapa pode ser habilitada (liberação sequencial)
+  const canStageBeEnabled = (stageId: string) => {
+    const stageOrder = ['plano_sucesso', 'inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
+    const currentIndex = stageOrder.indexOf(stageId)
+    
+    // Se é o Plano de Sucesso (primeira etapa), sempre pode ser habilitada
+    if (currentIndex === 0) {
+      return true
+    }
+    
+    // Para as demais etapas, verifica se a etapa anterior foi concluída
+    const previousStageId = stageOrder[currentIndex - 1]
+    return completedStages.includes(previousStageId)
+  }
+
+  // Obter o nome da etapa anterior que precisa ser concluída
+  const getPreviousStageName = (stageId: string) => {
+    const stageOrder = ['plano_sucesso', 'inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
+    const stageNames = {
+      'plano_sucesso': 'Plano de Sucesso do Cliente',
+      'inicial': 'Follow-up da Reunião Inicial',
+      'd5': 'D+5: Verificação de Integração',
+      'd15': 'D+15: Reforçar Presença',
+      'd50': 'D+50: Avaliação do 1º Ciclo',
+      'd80': 'D+80: Prevenção de Churn',
+      'd100': 'D+100: Fim do Onboarding Técnico',
+      'd180': 'D+180: Avaliação de Satisfação'
+    }
+    
+    const currentIndex = stageOrder.indexOf(stageId)
+    if (currentIndex > 0) {
+      const previousStageId = stageOrder[currentIndex - 1]
+      return stageNames[previousStageId as keyof typeof stageNames]
+    }
+    return ''
+  }
+
   const getFollowUpStages = () => {
     if (!client?.createdAt) return []
     
@@ -765,8 +802,8 @@ export function ClienteDetalhePage() {
           
           <div className="grid gap-4">
             {getFollowUpStages().map((stage, index) => {
-              // Se não for o Plano de Sucesso e o Plano de Sucesso não foi preenchido, desabilitar o card
-              const isDisabled = !stage.isPlanoSucesso && !isPlanoSucessoCompleted()
+              // Verificar se a etapa pode ser habilitada baseado na liberação sequencial
+              const isDisabled = !canStageBeEnabled(stage.id)
               
               return (
                 <Card 
@@ -778,10 +815,10 @@ export function ClienteDetalhePage() {
                   } ${getPriorityColor(stage.priority, stage.isOverdue, stage.isCompleted)}`}
                 >
                 <CardContent className="p-6">
-                  {isDisabled && !stage.isPlanoSucesso && (
+                  {isDisabled && (
                     <div className="mb-4 p-3 bg-gray-50 border border-gray-300 rounded-lg">
                       <p className="text-sm text-gray-700 font-medium">
-                        ⚠️ Esta etapa estará disponível após o preenchimento do "Plano de Sucesso do Cliente"
+                        ⚠️ Esta etapa estará disponível após a conclusão de: <strong>"{getPreviousStageName(stage.id)}"</strong>
                       </p>
                     </div>
                   )}
