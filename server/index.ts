@@ -1,10 +1,15 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
+import { auditMiddleware } from "./audit/middleware.js";
+import './cache.js'; // Inicializar Redis
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Middleware de auditoria automática
+app.use(auditMiddleware);
 
 app.use((req, res, next) => {
   const start = Date.now();
