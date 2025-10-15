@@ -3,6 +3,9 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
 import { insertClientSchema, insertAppointmentSchema, insertVisitSchema } from "@shared/schema";
 import { registerAuthRoutes } from "./routes/auth.js";
+import { registerAssignmentRoutes } from "./routes/assignments.js";
+import { registerCommentRoutes } from "./routes/comments.js";
+import { registerNotificationRoutes } from "./routes/notifications.js";
 import { authenticate, requireAdmin, requirePermissao } from "./auth/middleware.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -10,6 +13,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ROTAS DE AUTENTICAÇÃO (SEM PROTEÇÃO)
   // ========================================
   registerAuthRoutes(app);
+
+  // ========================================
+  // ROTAS DE ATRIBUIÇÕES (PROTEGIDAS)
+  // ========================================
+  registerAssignmentRoutes(app);
+
+  // ========================================
+  // ROTAS DE COMENTÁRIOS (PROTEGIDAS)
+  // ========================================
+  registerCommentRoutes(app);
+
+  // ========================================
+  // ROTAS DE NOTIFICAÇÕES (PROTEGIDAS)
+  // ========================================
+  registerNotificationRoutes(app);
+
+  // ========================================
+  // ROTAS EXISTENTES (A SEREM PROTEGIDAS)
+  // ========================================
   // Dashboard routes
   app.get("/api/dashboard/metrics", async (req, res) => {
     try {
