@@ -1,96 +1,478 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: hsl(0 0% 98%);
-  --foreground: hsl(0 0% 20%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(0 0% 20%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0 0% 20%);
-  --primary: hsl(24 90% 48%);
-  --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(0 0% 70%);
-  --secondary-foreground: hsl(0 0% 20%);
-  --muted: hsl(0 0% 95%);
-  --muted-foreground: hsl(0 0% 50%);
-  --accent: hsl(24 90% 48%);
-  --accent-foreground: hsl(0 0% 100%);
-  --destructive: hsl(0 84% 60%);
-  --destructive-foreground: hsl(0 0% 100%);
-  --border: hsl(0 0% 90%);
-  --input: hsl(0 0% 95%);
-  --ring: hsl(24 90% 48%);
-  --chart-1: hsl(24 90% 48%);
-  --chart-2: hsl(0 0% 60%);
-  --chart-3: hsl(24 70% 60%);
-  --chart-4: hsl(0 0% 70%);
-  --chart-5: hsl(24 60% 70%);
-  --radius: 0.5rem;
-  --sidebar: hsl(0 0% 98%);
-  --sidebar-foreground: hsl(0 0% 20%);
-  --sidebar-primary: hsl(24 90% 48%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(0 0% 95%);
-  --sidebar-accent-foreground: hsl(0 0% 20%);
-  --sidebar-border: hsl(0 0% 90%);
-  --sidebar-ring: hsl(24 90% 48%);
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
-}
+@layer base {
+  :root {
+    /* SABER Contábil Brand Colors */
+    --background: 210 20% 98%; /* #F5F7FA - Cinza Claro */
+    --foreground: 218 58% 12%; /* #0B1E3F - Azul Escuro */
+    --card: 0 0% 100%;
+    --card-foreground: 218 58% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 218 58% 12%;
+    --primary: 20 89% 48%; /* #EA610B - Laranja Vibrante */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 218 58% 12%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 20% 96%;
+    --accent-foreground: 218 58% 12%;
+    --destructive: 354 70% 54%; /* #E74C3C - Vermelho Erro */
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 13% 85%; /* Cinza mais suave para bordas */
+    --input: 220 13% 91%;
+    --ring: 20 89% 48%;
+    --radius: 0.75rem;
 
-.dark {
-  --background: hsl(0 0% 8%);
-  --foreground: hsl(0 0% 95%);
-  --card: hsl(0 0% 10%);
-  --card-foreground: hsl(0 0% 95%);
-  --popover: hsl(0 0% 10%);
-  --popover-foreground: hsl(0 0% 95%);
-  --primary: hsl(24 90% 55%);
-  --primary-foreground: hsl(0 0% 10%);
-  --secondary: hsl(0 0% 25%);
-  --secondary-foreground: hsl(0 0% 95%);
-  --muted: hsl(0 0% 15%);
-  --muted-foreground: hsl(0 0% 65%);
-  --accent: hsl(24 90% 55%);
-  --accent-foreground: hsl(0 0% 10%);
-  --destructive: hsl(0 62% 50%);
-  --destructive-foreground: hsl(0 0% 95%);
-  --border: hsl(0 0% 20%);
-  --input: hsl(0 0% 15%);
-  --ring: hsl(24 90% 55%);
-  --chart-1: hsl(24 90% 55%);
-  --chart-2: hsl(0 0% 50%);
-  --chart-3: hsl(24 70% 65%);
-  --chart-4: hsl(0 0% 60%);
-  --chart-5: hsl(24 60% 75%);
-  --sidebar: hsl(0 0% 8%);
-  --sidebar-foreground: hsl(0 0% 95%);
-  --sidebar-primary: hsl(24 90% 55%);
-  --sidebar-primary-foreground: hsl(0 0% 10%);
-  --sidebar-accent: hsl(0 0% 15%);
-  --sidebar-accent-foreground: hsl(0 0% 95%);
-  --sidebar-border: hsl(0 0% 20%);
-  --sidebar-ring: hsl(24 90% 55%);
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
+    /* Custom SABER Colors */
+    --saber-blue: 20 89% 48%; /* #EA610B - Laranja Vibrante */
+    --saber-blue-light: 20 89% 85%; /* #FDE8D6 - Laranja Claro para Hover */
+    --saber-gray: 210 20% 98%; /* #F5F7FA */
+    --saber-success: 145 63% 49%; /* #2ECC71 - Verde Sucesso */
+    --saber-warning: 48 89% 60%; /* #F1C40F - Amarelo Alerta */
+    --saber-danger: 354 70% 54%; /* #E74C3C - Vermelho Erro */
+
+    /* Chart Colors */
+    --chart-1: 145 63% 49%; /* Verde Sucesso */
+    --chart-2: 354 70% 54%; /* Vermelho Erro */
+    --chart-3: 48 89% 60%; /* Amarelo Alerta */
+    --chart-4: 20 89% 48%; /* Laranja Vibrante */
+    --chart-5: 210 20% 60%; /* Cinza Médio */
+
+    /* Sidebar */
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 218 58% 12%;
+    --sidebar-primary: 20 89% 48%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 20% 96%;
+    --sidebar-accent-foreground: 218 58% 12%;
+    --sidebar-border: 220 13% 85%;
+    --sidebar-ring: 20 89% 48%;
+
+    /* Font */
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-serif: Georgia, serif;
+    --font-mono: Menlo, monospace;
+  }
+
+  .dark {
+    --background: 218 58% 8%; /* #0A1628 - Azul Muito Escuro */
+    --foreground: 210 40% 98%;
+    --card: 218 58% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 218 58% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 20 89% 48%;
+    --secondary: 218 58% 12%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 218 58% 12%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 218 58% 12%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 354 70% 54%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 218 58% 12%;
+    --input: 218 58% 12%;
+    --ring: 210 40% 98%;
+
+    /* Dark mode adjustments */
+    --saber-blue: 20 89% 48%; /* #EA610B - Laranja Vibrante */
+    --saber-blue-light: 20 89% 85%; /* #FDE8D6 - Laranja Claro para Hover */
+    --saber-gray: 218 58% 8%;
+    --saber-success: 145 63% 49%;
+    --saber-warning: 48 89% 60%;
+    --saber-danger: 354 70% 54%;
+
+    /* Sidebar Dark */
+    --sidebar: 218 58% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 20 89% 55%;
+    --sidebar-primary-foreground: 218 58% 8%;
+    --sidebar-accent: 218 58% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 218 58% 12%;
+    --sidebar-ring: 20 89% 55%;
+  }
 }
 
 @layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply font-sans antialiased bg-background text-foreground;
-    font-family: var(--font-sans);
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
-.sidebar-shadow {
-  box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+@layer components {
+  /* SABER Brand Components */
+  .saber-card {
+    @apply bg-white dark:bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  .saber-button-primary {
+    background-color: hsl(var(--saber-blue));
+    @apply text-white font-medium px-6 py-2.5 rounded-lg transition-all duration-200 hover:shadow-md;
+  }
+
+  .saber-button-primary:hover {
+    background-color: hsl(var(--saber-blue) / 0.9);
+  }
+
+  .saber-button-success {
+    background-color: hsl(var(--saber-success));
+    @apply text-white font-medium px-6 py-2.5 rounded-lg transition-all duration-200 hover:shadow-md;
+  }
+
+  .saber-button-success:hover {
+    background-color: hsl(var(--saber-success) / 0.9);
+  }
+
+  .saber-button-warning {
+    background-color: hsl(var(--saber-warning));
+    @apply text-gray-800 font-medium px-6 py-2.5 rounded-lg transition-all duration-200 hover:shadow-md;
+  }
+
+  .saber-button-warning:hover {
+    background-color: hsl(var(--saber-warning) / 0.9);
+  }
+
+  .saber-button-danger {
+    background-color: hsl(var(--saber-danger));
+    @apply text-white font-medium px-6 py-2.5 rounded-lg transition-all duration-200 hover:shadow-md;
+  }
+
+  .saber-button-danger:hover {
+    background-color: hsl(var(--saber-danger) / 0.9);
+  }
+
+  .saber-badge-success {
+    background-color: hsl(var(--saber-success) / 0.1);
+    color: hsl(var(--saber-success));
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .saber-badge-warning {
+    background-color: hsl(var(--saber-warning) / 0.1);
+    color: hsl(var(--saber-warning));
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .saber-badge-danger {
+    background-color: hsl(var(--saber-danger) / 0.1);
+    color: hsl(var(--saber-danger));
+    @apply px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .saber-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--saber-blue)),
+      hsl(var(--saber-blue) / 0.8)
+    );
+  }
+
+  .saber-sidebar {
+    @apply bg-white dark:bg-card border-r border-gray-200 shadow-sm;
+    /* Estilos para sidebar fixo */
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Scrollbar personalizada para o sidebar */
+  .saber-sidebar nav::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .saber-sidebar nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .saber-sidebar nav::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 2px;
+  }
+
+  .saber-sidebar nav::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Garantir fundo adequado para dropdowns no sidebar */
+  .saber-sidebar [data-radix-popper-content-wrapper] {
+    background: white !important;
+    border: 1px solid hsl(var(--border)) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 0.5rem !important;
+  }
+
+  /* Melhorar contraste do overlay mobile */
+  .saber-sidebar-overlay {
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  /* Garantir fundo sólido para sidebar mobile */
+  @media (max-width: 768px) {
+    .saber-sidebar {
+      background: white !important;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    .saber-sidebar > div {
+      background: white !important;
+    }
+
+    .saber-sidebar nav {
+      background: white !important;
+    }
+
+    .saber-sidebar .p-4 {
+      background: white !important;
+    }
+
+    .saber-sidebar .p-2 {
+      background: white !important;
+    }
+  }
+
+  /* Garantir que o hover dos links do sidebar funcione */
+  .saber-sidebar a:hover {
+    background-color: hsl(var(--saber-blue-light)) !important;
+  }
+
+  .saber-sidebar a:focus {
+    background-color: hsl(var(--saber-blue-light)) !important;
+    outline: 2px solid hsl(var(--ring)) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Classes para tabelas SABER */
+  .saber-table {
+    @apply w-full border-collapse;
+  }
+
+  .saber-table-header {
+    @apply bg-orange-50 border-b border-orange-200;
+  }
+
+  .saber-table-header-cell {
+    @apply px-4 py-3 text-left text-sm font-semibold text-[#EA610B] uppercase tracking-wider;
+  }
+
+  .saber-table-row {
+    @apply border-b border-gray-100 hover:bg-orange-50/30 transition-colors;
+  }
+
+  .saber-table-cell {
+    @apply px-4 py-3 text-sm;
+  }
+
+  /* Classes para cards SABER */
+  .saber-card-header {
+    @apply border-b border-gray-100 pb-4;
+  }
+
+  /* Classes para tabs SABER */
+  .saber-tabs-list {
+    @apply bg-gray-100 p-1 rounded-xl;
+  }
+
+  .saber-tabs-trigger {
+    @apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/50 hover:text-[#EA610B] data-[state=active]:bg-white data-[state=active]:text-[#EA610B] data-[state=active]:shadow-md data-[state=active]:font-semibold;
+  }
+
+  /* Classes para selects SABER */
+  .saber-select-trigger {
+    @apply border-gray-200 bg-white hover:bg-gray-50;
+  }
+
+  .saber-select-content {
+    @apply bg-white border border-gray-200 shadow-lg rounded-lg;
+  }
+
+  .saber-select-item {
+    @apply hover:bg-orange-50 focus:bg-orange-50;
+  }
+
+  /* Classes para modais SABER */
+  .saber-modal {
+    @apply bg-white border border-gray-200 shadow-xl rounded-xl;
+  }
+
+  /* Padronização de Popover/Dropdown */
+  .saber-popover {
+    @apply bg-white/90 backdrop-blur-sm border border-border rounded-xl shadow-xl;
+  }
+
+  /* Padronização de Alertas */
+  .saber-alert {
+    @apply bg-white/90 backdrop-blur-sm border border-border rounded-xl shadow-lg;
+  }
+
+  .saber-alert-success {
+    @apply bg-green-50/90 border-green-200 text-green-800;
+  }
+
+  .saber-alert-warning {
+    @apply bg-yellow-50/90 border-yellow-200 text-yellow-800;
+  }
+
+  .saber-alert-error {
+    @apply bg-red-50/90 border-red-200 text-red-800;
+  }
+
+  .saber-alert-info {
+    @apply bg-blue-50/90 border-blue-200 text-blue-800;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+}
+
+@layer utilities {
+  .text-saber-blue {
+    color: hsl(var(--saber-blue));
+  }
+
+  .text-saber-success {
+    color: hsl(var(--saber-success));
+  }
+
+  .text-saber-warning {
+    color: hsl(var(--saber-warning));
+  }
+
+  .text-saber-danger {
+    color: hsl(var(--saber-danger));
+  }
+
+  .bg-saber-blue {
+    background-color: hsl(var(--saber-blue));
+  }
+
+  .bg-saber-gray {
+    background-color: hsl(var(--saber-gray));
+  }
+
+  .bg-saber-success {
+    background-color: hsl(var(--saber-success));
+  }
+
+  .bg-saber-warning {
+    background-color: hsl(var(--saber-warning));
+  }
+
+  .bg-saber-danger {
+    background-color: hsl(var(--saber-danger));
+  }
+
+  .bg-saber-blue-light {
+    background-color: hsl(var(--saber-blue-light));
+  }
+
+  .sidebar-shadow {
+    box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Login Page Animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(234, 97, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(234, 97, 11, 0.6);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  background-size: 200px 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }

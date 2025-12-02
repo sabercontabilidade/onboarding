@@ -3,7 +3,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { queryClient } from "@/lib/queryClient";
+import { AuthProvider } from "@/contexts/auth-context";
+import { WebSocketProvider } from "@/contexts/websocket-context";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AppLayout } from "@/components/layout/app-layout";
+import { LoginPage } from "@/pages/login";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import { Dashboard } from "@/pages/dashboard";
 import { ClientesPage } from "@/pages/clientes";
 import { NovoClientePage } from "@/pages/clientes/novo";
@@ -15,34 +21,61 @@ import { ConfiguracoesPage } from "@/pages/configuracoes";
 import { AgendamentosPage } from "@/pages/agendamentos";
 import { VisitasPage } from "@/pages/visitas";
 import { OnboardingPage } from "@/pages/onboarding";
+import { AuditoriaPage } from "@/pages/auditoria";
+import { UsuariosPage } from "@/pages/usuarios";
+import RelatoriosPage from "@/pages/relatorios";
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppLayout>
+      <AuthProvider>
+        <WebSocketProvider>
+          <TooltipProvider>
           <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/clientes" component={ClientesPage} />
-            <Route path="/clientes/novo" component={NovoClientePage} />
-            <Route path="/clientes/:id" component={ClienteDetalhePage} />
-            <Route path="/clientes/:id/visitas" component={ClienteVisitasPage} />
-            <Route path="/clientes/:id/editar" component={EditarClientePage} />
-            <Route path="/cliente-agendamentos/:id" component={ClienteAgendamentosPage} />
-            <Route path="/onboarding" component={OnboardingPage} />
-            <Route path="/agendamentos" component={AgendamentosPage} />
-            <Route path="/visitas" component={VisitasPage} />
-            <Route path="/configuracoes" component={ConfiguracoesPage} />
+            <Route path="/login"><LoginPage /></Route>
+            <Route path="/forgot-password"><ForgotPasswordPage /></Route>
+            <Route path="/reset-password"><ResetPasswordPage /></Route>
             <Route>
-              <div className="text-center py-8">
-                <h2 className="text-2xl font-bold mb-2">Página não encontrada</h2>
-                <p className="text-muted-foreground">A página que você está procurando não existe.</p>
-              </div>
+              <ProtectedRoute>
+                <AppLayout>
+                  <Switch>
+                    <Route path="/"><Dashboard /></Route>
+                    <Route path="/clientes"><ClientesPage /></Route>
+                    <Route path="/clientes/novo"><NovoClientePage /></Route>
+                    <Route path="/clientes/:id">{(params) => <ClienteDetalhePage {...params} />}</Route>
+                    <Route path="/clientes/:id/visitas">{(params) => <ClienteVisitasPage {...params} />}</Route>
+                    <Route path="/clientes/:id/editar">{(params) => <EditarClientePage {...params} />}</Route>
+                    <Route path="/cliente-agendamentos/:id">{(params) => <ClienteAgendamentosPage {...params} />}</Route>
+                    <Route path="/onboarding"><OnboardingPage /></Route>
+                    <Route path="/agendamentos"><AgendamentosPage /></Route>
+                    <Route path="/visitas"><VisitasPage /></Route>
+                    <Route path="/relatorios"><RelatoriosPage /></Route>
+                    <Route path="/configuracoes"><ConfiguracoesPage /></Route>
+                    <Route path="/auditoria">
+                      <ProtectedRoute requireAdmin={true}>
+                        <AuditoriaPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="/usuarios">
+                      <ProtectedRoute requireAdmin={true}>
+                        <UsuariosPage />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route>
+                      <div className="text-center py-8">
+                        <h2 className="text-2xl font-bold mb-2">Página não encontrada</h2>
+                        <p className="text-muted-foreground">A página que você está procurando não existe.</p>
+                      </div>
+                    </Route>
+                  </Switch>
+                </AppLayout>
+              </ProtectedRoute>
             </Route>
           </Switch>
-        </AppLayout>
-        <Toaster />
-      </TooltipProvider>
+          <Toaster />
+          </TooltipProvider>
+        </WebSocketProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

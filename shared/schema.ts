@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, json, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, json, boolean, pgEnum, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -16,6 +16,40 @@ export const tipoAgendamentoEnum = pgEnum("tipo_agendamento", ["meeting", "visit
 export const statusVisitaEnum = pgEnum("status_visita", ["scheduled", "completed", "cancelled"]);
 export const tipoVisitaEnum = pgEnum("tipo_visita", ["technical_visit", "maintenance", "training", "follow_up"]);
 export const statusAtribuicaoEnum = pgEnum("status_atribuicao", ["pending", "signed", "completed", "rejected"]);
+
+// ========================================
+// SETORES (Sistema de Setores)
+// ========================================
+
+export const setores = pgTable("setores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nome: text("nome").notNull().unique(),
+  codigo: text("codigo").notNull().unique(),
+  email: text("email").unique(),
+  descricao: text("descricao"),
+  cor: text("cor"), // Hex color para UI
+  icone: text("icone"), // Nome do ícone Lucide
+  ativo: boolean("ativo").default(true).notNull(),
+  isSystem: boolean("is_system").default(false).notNull(), // Setor Sistema não pode ser deletado
+  ordem: integer("ordem").default(0).notNull(), // Ordem de exibição
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ========================================
+// PERFIS (Níveis de Acesso por Setor)
+// ========================================
+
+export const perfis = pgTable("perfis", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nome: text("nome").notNull().unique(),
+  codigo: text("codigo").notNull().unique(),
+  descricao: text("descricao"),
+  nivelHierarquico: integer("nivel_hierarquico").notNull(), // 0=Root, 1=Gestor, 2=Operador, 3=Analista
+  ativo: boolean("ativo").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
 // ========================================
 // USERS (Sistema de Autenticação Completo)
@@ -35,6 +69,11 @@ export const users = pgTable("users", {
   dataNascimento: timestamp("data_nascimento"),
   ativo: boolean("ativo").default(true).notNull(),
   bloqueado: boolean("bloqueado").default(false).notNull(),
+  googleConnected: boolean("google_connected").default(false).notNull(),
+  primeiroLogin: boolean("primeiro_login").default(true).notNull(),
+  twoFactorSecret: text("two_factor_secret"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
+  twoFactorBackupCodes: json("two_factor_backup_codes").$type<string[]>(),
   ultimoLogin: timestamp("ultimo_login"),
   tentativasLogin: integer("tentativas_login").default(0).notNull(),
   permissoes: json("permissoes").$type<{
@@ -56,12 +95,58 @@ export const users = pgTable("users", {
 });
 
 // ========================================
+// USER_SETORES (Relacionamento N:N entre Usuários e Setores)
+// ========================================
+
+export const userSetores = pgTable("user_setores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  setorId: varchar("setor_id").notNull().references(() => setores.id, { onDelete: "cascade" }),
+  perfilId: varchar("perfil_id").notNull().references(() => perfis.id, { onDelete: "restrict" }),
+  principal: boolean("principal").default(false).notNull(), // Setor principal do usuário
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserSetor: unique().on(table.userId, table.setorId), // Usuário só pode ter 1 perfil por setor
+}));
+
+// ========================================
+// PERMISSAO CATALOGO (Catálogo de Permissões)
+// ========================================
+
+export const permissaoCatalogo = pgTable("permissao_catalogo", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  codigo: text("codigo").notNull().unique(), // "onboarding:stages:create"
+  nome: text("nome").notNull(), // "Criar Etapas de Onboarding"
+  descricao: text("descricao"),
+  modulo: text("modulo").notNull(), // "onboarding", "clientes", "usuarios"
+  categoria: text("categoria"), // "stages", "appointments", "visits"
+  ativo: boolean("ativo").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ========================================
+// PERFIL SETOR PERMISSAO (Vínculo Perfil-Setor-Permissão)
+// ========================================
+
+export const perfilSetorPermissao = pgTable("perfil_setor_permissao", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  perfilId: varchar("perfil_id").notNull().references(() => perfis.id, { onDelete: "cascade" }),
+  setorId: varchar("setor_id").references(() => setores.id, { onDelete: "cascade" }), // NULL = global
+  permissaoId: varchar("permissao_id").notNull().references(() => permissaoCatalogo.id, { onDelete: "cascade" }),
+  escopo: text("escopo").default("setor").notNull(), // "global", "setor", "proprio"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniquePerfilSetorPermissao: unique().on(table.perfilId, table.setorId, table.permissaoId),
+}));
+
+// ========================================
 // AUDIT LOGS (Sistema de Auditoria)
 // ========================================
 
 export const auditLogs = pgTable("audit_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   usuarioId: varchar("usuario_id").references(() => users.id, { onDelete: "set null" }),
+  setorId: varchar("setor_id").references(() => setores.id, { onDelete: "set null" }), // Contexto do setor
   acao: text("acao").notNull(), // create, update, delete, login, logout, etc.
   entidade: text("entidade"), // users, clients, appointments, etc.
   entidadeId: varchar("entidade_id"),
@@ -81,6 +166,7 @@ export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   usuarioId: varchar("usuario_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   remetenteId: varchar("remetente_id").references(() => users.id, { onDelete: "set null" }),
+  setorId: varchar("setor_id").references(() => setores.id, { onDelete: "set null" }), // Contexto do setor
   tipo: text("tipo").notNull(), // assignment, comment, status_change, reminder, etc.
   titulo: text("titulo").notNull(),
   mensagem: text("mensagem").notNull(),
@@ -119,7 +205,8 @@ export const onboardingStages = pgTable("onboarding_stages", {
   clientId: varchar("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   stage: text("stage").notNull(), // initial_meeting, documentation, review, completed
   status: statusOnboardingEnum("status").default("pending").notNull(),
-  funcaoResponsavel: funcaoEnum("funcao_responsavel"), // Qual função deve executar esta etapa
+  funcaoResponsavel: funcaoEnum("funcao_responsavel"), // [DEPRECATED] Migrar para setorResponsavelId
+  setorResponsavelId: varchar("setor_responsavel_id").references(() => setores.id, { onDelete: "set null" }), // Setor responsável pela etapa
   assignedTo: varchar("assigned_to").references(() => users.id), // Usuário atribuído
   assignmentRequired: boolean("assignment_required").default(false).notNull(), // Requer atribuição?
   scheduledDate: timestamp("scheduled_date"),
@@ -139,7 +226,8 @@ export const processAssignments = pgTable("process_assignments", {
   stageId: varchar("stage_id"), // Referência opcional para etapas específicas
   assignedTo: varchar("assigned_to").notNull().references(() => users.id),
   assignedBy: varchar("assigned_by").notNull().references(() => users.id),
-  funcaoNecessaria: funcaoEnum("funcao_necessaria"), // Função necessária para executar
+  funcaoNecessaria: funcaoEnum("funcao_necessaria"), // [DEPRECATED] Migrar para setorId
+  setorId: varchar("setor_id").references(() => setores.id, { onDelete: "set null" }), // Setor necessário para executar
   status: statusAtribuicaoEnum("status").default("pending").notNull(),
   assignedAt: timestamp("assigned_at").defaultNow().notNull(),
   signedAt: timestamp("signed_at"), // Quando o usuário aceitou a responsabilidade
@@ -237,8 +325,82 @@ export const integrations = pgTable("integrations", {
 });
 
 // ========================================
+// PASSWORD RESET TOKENS
+// ========================================
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ========================================
+// FILES (Upload de arquivos)
+// ========================================
+
+export const files = pgTable("files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  url: text("url").notNull(),
+  bucket: text("bucket").notNull(),
+  key: text("key").notNull(),
+  uploadedBy: varchar("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+  entityType: text("entity_type"), // 'visit', 'client', 'user'
+  entityId: varchar("entity_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ========================================
+// GOOGLE TOKENS (OAuth2 por usuário)
+// ========================================
+
+export const googleTokens = pgTable("google_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  accessTokenEncrypted: text("access_token_encrypted").notNull(),
+  refreshTokenEncrypted: text("refresh_token_encrypted").notNull(),
+  expiry: timestamp("expiry").notNull(),
+  scopes: json("scopes").$type<string[]>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ========================================
 // INSERT SCHEMAS
 // ========================================
+
+export const insertSetorSchema = createInsertSchema(setores).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPerfilSchema = createInsertSchema(perfis).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSetorSchema = createInsertSchema(userSetores).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPermissaoCatalogoSchema = createInsertSchema(permissaoCatalogo).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPerfilSetorPermissaoSchema = createInsertSchema(perfilSetorPermissao).omit({
+  id: true,
+  createdAt: true,
+});
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -300,9 +462,40 @@ export const insertIntegrationSchema = createInsertSchema(integrations).omit({
   createdAt: true,
 });
 
+export const insertGoogleTokenSchema = createInsertSchema(googleTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPasswordResetTokenSchema = createInsertSchema(passwordResetTokens).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFileSchema = createInsertSchema(files).omit({
+  id: true,
+  createdAt: true,
+});
+
 // ========================================
 // TYPES
 // ========================================
+
+export type InsertSetor = z.infer<typeof insertSetorSchema>;
+export type Setor = typeof setores.$inferSelect;
+
+export type InsertPerfil = z.infer<typeof insertPerfilSchema>;
+export type Perfil = typeof perfis.$inferSelect;
+
+export type InsertUserSetor = z.infer<typeof insertUserSetorSchema>;
+export type UserSetor = typeof userSetores.$inferSelect;
+
+export type InsertPermissaoCatalogo = z.infer<typeof insertPermissaoCatalogoSchema>;
+export type PermissaoCatalogo = typeof permissaoCatalogo.$inferSelect;
+
+export type InsertPerfilSetorPermissao = z.infer<typeof insertPerfilSetorPermissaoSchema>;
+export type PerfilSetorPermissao = typeof perfilSetorPermissao.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -337,6 +530,15 @@ export type Activity = typeof activities.$inferSelect;
 export type InsertIntegration = z.infer<typeof insertIntegrationSchema>;
 export type Integration = typeof integrations.$inferSelect;
 
+export type InsertGoogleToken = z.infer<typeof insertGoogleTokenSchema>;
+export type GoogleToken = typeof googleTokens.$inferSelect;
+
+export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+
+export type InsertFile = z.infer<typeof insertFileSchema>;
+export type File = typeof files.$inferSelect;
+
 // ========================================
 // EXTENDED TYPES
 // ========================================
@@ -346,6 +548,7 @@ export type ClientWithDetails = Client & {
   currentStage?: OnboardingStage;
   nextAppointment?: Appointment;
   lastActivity?: Activity;
+  onboardingProgress?: number;
 };
 
 export type AppointmentWithDetails = Appointment & {
@@ -376,4 +579,22 @@ export type CommentWithUser = Comment & {
 
 export type NotificationWithDetails = Notification & {
   remetente?: UserWithoutPassword;
+  setor?: Setor;
+};
+
+// Tipo para UserSetor com detalhes
+export type UserSetorWithDetails = UserSetor & {
+  setor: Setor;
+  perfil: Perfil;
+};
+
+// Tipo para Usuário com seus setores
+export type UserWithSetores = UserWithoutPassword & {
+  setores: UserSetorWithDetails[];
+  setorPrincipal?: Setor;
+};
+
+// Tipo para Setor com usuários
+export type SetorWithUsers = Setor & {
+  usuarios: (UserWithoutPassword & { perfil: Perfil })[];
 };

@@ -1,12 +1,14 @@
 import type { Express } from 'express';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { db } from '../db.js';
-import { users, auditLogs } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { users, auditLogs, passwordResetTokens, userSetores, setores, perfis } from '@shared/schema';
+import { eq, and, gt, desc, asc } from 'drizzle-orm';
 import { generateTokenPair, verifyToken, extractTokenFromHeader } from '../auth/jwt.js';
 import { authenticate } from '../auth/middleware.js';
 import { createAuditLog, getClientIp, AuditActions } from '../audit/logger.js';
 import { deleteCache, CACHE_KEYS } from '../cache.js';
+import { sendPasswordResetEmail, sendUserWelcomeEmail } from '../services/email/resend.js';
 
 export function registerAuthRoutes(app: Express) {
   /**
@@ -65,6 +67,16 @@ export function registerAuthRoutes(app: Express) {
         dadosNovos: { nome, email, funcao, nivelPermissao },
         ipOrigem: getClientIp(req),
         userAgent: req.headers['user-agent'],
+      });
+
+      // Enviar email de boas-vindas com credenciais
+      const baseUrl = process.env.APP_URL || 'http://localhost:5000';
+      await sendUserWelcomeEmail(email, {
+        userName: nome,
+        userEmail: email,
+        tempPassword: senha,
+        loginUrl: `${baseUrl}/login`,
+        supportEmail: 'suporte@sabercontabil.com.br',
       });
 
       // Remover dados sensíveis
@@ -309,7 +321,7 @@ export function registerAuthRoutes(app: Express) {
 
   /**
    * GET /api/auth/me
-   * Obter dados do usuário autenticado
+   * Obter dados do usuário autenticado com seus setores
    */
   app.get('/api/auth/me', authenticate, async (req, res) => {
     try {
@@ -328,12 +340,48 @@ export function registerAuthRoutes(app: Express) {
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
 
+      // Buscar setores do usuário
+      const userSetoresResult = await db
+        .select({
+          id: userSetores.id,
+          userId: userSetores.userId,
+          setorId: userSetores.setorId,
+          perfilId: userSetores.perfilId,
+          principal: userSetores.principal,
+          createdAt: userSetores.createdAt,
+          setor: {
+            id: setores.id,
+            nome: setores.nome,
+            codigo: setores.codigo,
+            cor: setores.cor,
+            icone: setores.icone,
+          },
+          perfil: {
+            id: perfis.id,
+            nome: perfis.nome,
+            codigo: perfis.codigo,
+            nivelHierarquico: perfis.nivelHierarquico,
+          },
+        })
+        .from(userSetores)
+        .innerJoin(setores, eq(userSetores.setorId, setores.id))
+        .innerJoin(perfis, eq(userSetores.perfilId, perfis.id))
+        .where(eq(userSetores.userId, user.id))
+        .orderBy(desc(userSetores.principal), asc(setores.ordem));
+
+      // Encontrar setor principal
+      const setorPrincipal = userSetoresResult.find(us => us.principal)?.setor || userSetoresResult[0]?.setor;
+
       // Remover dados sensíveis
       const { senhaHash, token, refreshToken, ...userWithoutPassword } = user;
 
       res.json({
         success: true,
-        user: userWithoutPassword,
+        user: {
+          ...userWithoutPassword,
+          setores: userSetoresResult,
+          setorPrincipal,
+        },
       });
     } catch (error) {
       console.error('Erro ao buscar dados do usuário:', error);
@@ -368,15 +416,34 @@ export function registerAuthRoutes(app: Express) {
         });
       }
 
-      // TODO: Implementar envio de email com token de recuperação
-      // Por enquanto, apenas criar audit log
+      // Gerar token seguro
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+      // Salvar token no banco
+      await db.insert(passwordResetTokens).values({
+        userId: user.id,
+        token: resetToken,
+        expiresAt,
+      });
+
+      // Gerar URL de reset
+      const baseUrl = process.env.APP_URL || 'http://localhost:5000';
+      const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+
+      // Enviar email
+      await sendPasswordResetEmail(user.email, {
+        userName: user.nome,
+        resetUrl,
+        expiresIn: '1 hora',
+      });
 
       await createAuditLog({
         usuarioId: user.id,
         acao: AuditActions.PASSWORD_RESET_REQUEST,
         entidade: 'user',
         entidadeId: user.id,
-        descricao: 'Solicitação de recuperação de senha',
+        descricao: 'Solicitação de recuperação de senha - email enviado',
         ipOrigem: getClientIp(req),
         userAgent: req.headers['user-agent'],
       });
@@ -388,6 +455,130 @@ export function registerAuthRoutes(app: Express) {
     } catch (error) {
       console.error('Erro ao solicitar recuperação de senha:', error);
       res.status(500).json({ error: 'Erro ao solicitar recuperação de senha' });
+    }
+  });
+
+  /**
+   * GET /api/auth/verify-reset-token/:token
+   * Verificar se token de recuperação é válido
+   */
+  app.get('/api/auth/verify-reset-token/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+
+      if (!token) {
+        return res.status(400).json({ error: 'Token não fornecido' });
+      }
+
+      // Buscar token válido (não usado e não expirado)
+      const [resetToken] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(
+          and(
+            eq(passwordResetTokens.token, token),
+            gt(passwordResetTokens.expiresAt, new Date())
+          )
+        )
+        .limit(1);
+
+      if (!resetToken || resetToken.usedAt) {
+        return res.status(400).json({
+          valid: false,
+          error: 'Token inválido ou expirado',
+        });
+      }
+
+      res.json({
+        valid: true,
+        message: 'Token válido',
+      });
+    } catch (error) {
+      console.error('Erro ao verificar token:', error);
+      res.status(500).json({ error: 'Erro ao verificar token' });
+    }
+  });
+
+  /**
+   * POST /api/auth/reset-password
+   * Redefinir senha usando token de recuperação
+   */
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, novaSenha } = req.body;
+
+      if (!token || !novaSenha) {
+        return res.status(400).json({ error: 'Token e nova senha são obrigatórios' });
+      }
+
+      if (novaSenha.length < 6) {
+        return res.status(400).json({ error: 'Nova senha deve ter no mínimo 6 caracteres' });
+      }
+
+      // Buscar token válido
+      const [resetToken] = await db
+        .select()
+        .from(passwordResetTokens)
+        .where(
+          and(
+            eq(passwordResetTokens.token, token),
+            gt(passwordResetTokens.expiresAt, new Date())
+          )
+        )
+        .limit(1);
+
+      if (!resetToken || resetToken.usedAt) {
+        return res.status(400).json({ error: 'Token inválido ou expirado' });
+      }
+
+      // Buscar usuário
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, resetToken.userId))
+        .limit(1);
+
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      // Hash da nova senha
+      const novaSenhaHash = await bcrypt.hash(novaSenha, 10);
+
+      // Atualizar senha e desbloquear usuário
+      await db
+        .update(users)
+        .set({
+          senhaHash: novaSenhaHash,
+          bloqueado: false,
+          tentativasLogin: 0,
+        })
+        .where(eq(users.id, user.id));
+
+      // Marcar token como usado
+      await db
+        .update(passwordResetTokens)
+        .set({ usedAt: new Date() })
+        .where(eq(passwordResetTokens.id, resetToken.id));
+
+      // Audit log
+      await createAuditLog({
+        usuarioId: user.id,
+        acao: AuditActions.PASSWORD_RESET,
+        entidade: 'user',
+        entidadeId: user.id,
+        descricao: 'Senha redefinida via token de recuperação',
+        ipOrigem: getClientIp(req),
+        userAgent: req.headers['user-agent'],
+      });
+
+      res.json({
+        success: true,
+        message: 'Senha redefinida com sucesso. Você já pode fazer login.',
+      });
+    } catch (error) {
+      console.error('Erro ao redefinir senha:', error);
+      res.status(500).json({ error: 'Erro ao redefinir senha' });
     }
   });
 

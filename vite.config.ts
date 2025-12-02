@@ -4,6 +4,7 @@ import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
+  logLevel: 'error', // Apenas logs de erro para reduzir verbosidade
   plugins: [
     react(),
     runtimeErrorOverlay(),

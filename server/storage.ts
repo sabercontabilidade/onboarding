@@ -38,6 +38,7 @@ export interface IStorage {
 
   // Appointment methods
   getAppointments(): Promise<Appointment[]>;
+  getAppointmentsByClient(clientId: string): Promise<Appointment[]>;
   getAppointmentsWithDetails(): Promise<AppointmentWithDetails[]>;
   getUpcomingAppointments(limit?: number): Promise<AppointmentWithDetails[]>;
   getAppointment(id: string): Promise<Appointment | undefined>;
@@ -115,18 +116,18 @@ export class MemStorage implements IStorage {
 
   async getClientsWithDetails(search?: string): Promise<ClientWithDetails[]> {
     let clients = Array.from(this.clients.values());
-    
+
     // Apply search filter if provided
     if (search) {
       const searchLower = search.toLowerCase();
-      clients = clients.filter(client => 
+      clients = clients.filter(client =>
         client.companyName.toLowerCase().includes(searchLower) ||
         (client.cnpj && client.cnpj.toLowerCase().includes(searchLower)) ||
         (client.contactName && client.contactName.toLowerCase().includes(searchLower)) ||
         (client.contactEmail && client.contactEmail.toLowerCase().includes(searchLower))
       );
     }
-    
+
     const clientsWithDetails: ClientWithDetails[] = [];
 
     for (const client of clients) {
@@ -140,12 +141,20 @@ export class MemStorage implements IStorage {
       const clientAppointments = Array.from(this.appointments.values()).filter(a => a.clientId === client.id && a.scheduledStart > new Date());
       const nextAppointment = clientAppointments.sort((a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime())[0];
 
+      // Calculate onboarding progress (only for clients in onboarding)
+      let onboardingProgress = 0;
+      if (client.status === 'onboarding' && stages.length > 0) {
+        const completedStages = stages.filter(s => s.status === 'completed').length;
+        onboardingProgress = Math.round((completedStages / stages.length) * 100);
+      }
+
       clientsWithDetails.push({
         ...client,
         assignee,
         currentStage,
         lastActivity,
         nextAppointment,
+        onboardingProgress,
       });
     }
 
@@ -170,12 +179,20 @@ export class MemStorage implements IStorage {
     const clientAppointments = Array.from(this.appointments.values()).filter(a => a.clientId === client.id && a.scheduledStart > new Date());
     const nextAppointment = clientAppointments.sort((a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime())[0];
 
+    // Calculate onboarding progress (only for clients in onboarding)
+    let onboardingProgress = 0;
+    if (client.status === 'onboarding' && stages.length > 0) {
+      const completedStages = stages.filter(s => s.status === 'completed').length;
+      onboardingProgress = Math.round((completedStages / stages.length) * 100);
+    }
+
     return {
       ...client,
       assignee,
       currentStage,
       lastActivity,
       nextAppointment,
+      onboardingProgress,
     };
   }
 
@@ -339,6 +356,10 @@ export class MemStorage implements IStorage {
 
   async getAppointments(): Promise<Appointment[]> {
     return Array.from(this.appointments.values());
+  }
+
+  async getAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    return Array.from(this.appointments.values()).filter(a => a.clientId === clientId);
   }
 
   async getAppointmentsWithDetails(): Promise<AppointmentWithDetails[]> {
@@ -581,7 +602,7 @@ export class DatabaseStorage implements IStorage {
 
     for (const client of clientsData) {
       // Get assignee
-      const assignee = client.assigneeId 
+      const assignee = client.assigneeId
         ? (await db.select().from(users).where(eq(users.id, client.assigneeId)))[0]
         : undefined;
 
@@ -603,12 +624,20 @@ export class DatabaseStorage implements IStorage {
         .limit(1);
       const nextAppointment = nextAppointmentList[0];
 
+      // Get onboarding progress (only for clients in onboarding)
+      let onboardingProgress = 0;
+      if (client.status === 'onboarding') {
+        const progress = await this.getOnboardingProgress(client.id);
+        onboardingProgress = progress.progress;
+      }
+
       clientsWithDetails.push({
         ...client,
         assignee,
         currentStage,
         lastActivity,
         nextAppointment,
+        onboardingProgress,
       });
     }
 
@@ -619,7 +648,7 @@ export class DatabaseStorage implements IStorage {
     const client = await this.getClient(id);
     if (!client) return undefined;
 
-    const assignee = client.assigneeId 
+    const assignee = client.assigneeId
       ? (await db.select().from(users).where(eq(users.id, client.assigneeId)))[0]
       : undefined;
 
@@ -636,12 +665,20 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(appointments.scheduledStart));
     const nextAppointment = clientAppointments[0];
 
+    // Get onboarding progress (only for clients in onboarding)
+    let onboardingProgress = 0;
+    if (client.status === 'onboarding') {
+      const progress = await this.getOnboardingProgress(client.id);
+      onboardingProgress = progress.progress;
+    }
+
     return {
       ...client,
       assignee,
       currentStage,
       lastActivity,
       nextAppointment,
+      onboardingProgress,
     };
   }
 
@@ -728,6 +765,12 @@ export class DatabaseStorage implements IStorage {
   // Appointment methods
   async getAppointments(): Promise<Appointment[]> {
     return await db.select().from(appointments).orderBy(desc(appointments.createdAt));
+  }
+
+  async getAppointmentsByClient(clientId: string): Promise<Appointment[]> {
+    return await db.select().from(appointments)
+      .where(eq(appointments.clientId, clientId))
+      .orderBy(desc(appointments.createdAt));
   }
 
   async getAppointmentsWithDetails(): Promise<AppointmentWithDetails[]> {
@@ -939,7 +982,7 @@ export class DatabaseStorage implements IStorage {
     // Verificar se cliente existe
     const client = await this.getClient(clientId);
     if (!client) throw new Error("Cliente não encontrado");
-    
+
     // Verificar se o cliente já tem status 'onboarding'
     if (client.status === 'onboarding') {
       throw new Error("Onboarding já foi iniciado para este cliente");
@@ -948,12 +991,8 @@ export class DatabaseStorage implements IStorage {
     // Atualizar status do cliente para 'onboarding'
     await this.updateClient(clientId, { status: 'onboarding' });
 
-    // Criar etapa inicial de onboarding
-    await this.createOnboardingStage({
-      clientId: clientId,
-      stage: "initial_meeting",
-      status: "pending",
-    });
+    // Criar etapas padrão de onboarding (8 etapas)
+    await this.createDefaultOnboardingStages(clientId, assigneeId);
 
     // Criar agendamento inicial (1 semana a partir de hoje)
     const appointmentDate = new Date();
@@ -975,6 +1014,18 @@ export class DatabaseStorage implements IStorage {
       googleEventId: null,
     });
 
+    // Criar agendamentos automáticos de follow-up (D+15, D+50, D+80, D+100, D+180)
+    try {
+      const { createAutomaticAppointments } = await import('./services/appointments/auto-schedule.js');
+      const responsibleId = assigneeId || client.assigneeId;
+      if (responsibleId) {
+        await createAutomaticAppointments(clientId, responsibleId, new Date());
+      }
+    } catch (error) {
+      console.error('Erro ao criar agendamentos automáticos:', error);
+      // Não bloquear o onboarding se os agendamentos automáticos falharem
+    }
+
     // Criar atividade
     await this.createActivity({
       clientId: clientId,
@@ -987,26 +1038,290 @@ export class DatabaseStorage implements IStorage {
   async resetOnboarding(clientId: string): Promise<void> {
     // Limpar todas as etapas de onboarding para este cliente
     await db.delete(onboardingStages).where(eq(onboardingStages.clientId, clientId));
-    
+
     // Voltar status do cliente para 'pending'
     await this.updateClient(clientId, { status: 'pending' });
+  }
+
+  // Criar etapas padrão de onboarding
+  async createDefaultOnboardingStages(clientId: string, assigneeId?: string): Promise<void> {
+    const defaultStages = [
+      { stage: 'plano_sucesso', funcaoResponsavel: 'onboarding' },
+      { stage: 'inicial', funcaoResponsavel: 'onboarding' },
+      { stage: 'd5', funcaoResponsavel: 'onboarding' },
+      { stage: 'd15', funcaoResponsavel: 'onboarding' },
+      { stage: 'd50', funcaoResponsavel: 'onboarding' },
+      { stage: 'd80', funcaoResponsavel: 'onboarding' },
+      { stage: 'd100', funcaoResponsavel: 'onboarding' },
+      { stage: 'd180', funcaoResponsavel: 'onboarding' },
+    ];
+
+    for (const stageInfo of defaultStages) {
+      await db.insert(onboardingStages).values({
+        clientId,
+        stage: stageInfo.stage,
+        status: 'pending',
+        funcaoResponsavel: stageInfo.funcaoResponsavel as any,
+        assignedTo: assigneeId || null,
+      });
+    }
+  }
+
+  // Buscar progresso de onboarding de um cliente
+  async getOnboardingProgress(clientId: string) {
+    const stages = await this.getOnboardingStages(clientId);
+    const totalStages = stages.length;
+    const completedStages = stages.filter(s => s.status === 'completed').length;
+    const progress = totalStages > 0 ? (completedStages / totalStages) * 100 : 0;
+
+    return {
+      clientId,
+      totalStages,
+      completedStages,
+      progress: Math.round(progress),
+      stages,
+    };
+  }
+
+  // Buscar estatísticas de onboarding
+  async getOnboardingStats() {
+    const allClients = await this.getClients();
+    const onboardingClients = allClients.filter(c => c.status === 'onboarding');
+
+    let inProgress = 0;
+    let completed = 0;
+
+    for (const client of onboardingClients) {
+      const progress = await this.getOnboardingProgress(client.id);
+      if (progress.progress === 100) {
+        completed++;
+      } else if (progress.progress > 0) {
+        inProgress++;
+      }
+    }
+
+    return {
+      total: onboardingClients.length,
+      inProgress,
+      completed,
+      pending: onboardingClients.length - inProgress - completed,
+    };
+  }
+
+  // Buscar contadores do dashboard
+  async getDashboardCounts() {
+    const allClients = await this.getClients();
+    const allAppointments = await this.getAppointments();
+    const allVisits = await this.getVisits();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const onboardingClients = allClients.filter(c => c.status === 'onboarding');
+    let onboardingInProgress = 0;
+    let onboardingCompleted = 0;
+
+    for (const client of onboardingClients) {
+      const progress = await this.getOnboardingProgress(client.id);
+      if (progress.progress === 100) {
+        onboardingCompleted++;
+      } else if (progress.progress > 0) {
+        onboardingInProgress++;
+      }
+    }
+
+    const appointmentsToday = allAppointments.filter(apt => {
+      const aptDate = new Date(apt.scheduledStart);
+      aptDate.setHours(0, 0, 0, 0);
+      return aptDate.getTime() === today.getTime();
+    }).length;
+
+    const overdueAppointments = allAppointments.filter(apt => {
+      return new Date(apt.scheduledStart) < new Date() && apt.status === 'scheduled';
+    }).length;
+
+    return {
+      totalClients: allClients.length,
+      activeClients: allClients.filter(c => c.status === 'active' || c.status === 'onboarding').length,
+      onboardingTotal: onboardingClients.length,
+      onboardingInProgress,
+      onboardingCompleted,
+      appointmentsToday,
+      overdueAppointments,
+      totalVisits: allVisits.length,
+    };
+  }
+
+  // Estatísticas de satisfação (baseado em ratings de visitas)
+  async getSatisfactionStats() {
+    const allVisits = await this.getVisits();
+    const visitsWithRating = allVisits.filter(v => v.satisfaction_rating !== null);
+
+    if (visitsWithRating.length === 0) {
+      return {
+        averageRating: 0,
+        totalResponses: 0,
+        distribution: {
+          1: 0,
+          2: 0,
+          3: 0,
+          4: 0,
+          5: 0,
+        },
+        recentFeedback: [],
+      };
+    }
+
+    // Calcular média
+    const sum = visitsWithRating.reduce((acc, v) => acc + (v.satisfaction_rating || 0), 0);
+    const averageRating = sum / visitsWithRating.length;
+
+    // Calcular distribuição
+    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const visit of visitsWithRating) {
+      const rating = visit.satisfaction_rating as number;
+      distribution[rating] = (distribution[rating] || 0) + 1;
+    }
+
+    // Últimos feedbacks
+    const recentFeedback = await Promise.all(
+      visitsWithRating
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 5)
+        .map(async (visit) => {
+          const client = await this.getClient(visit.clientId);
+          return {
+            clientName: client?.companyName || 'N/A',
+            rating: visit.satisfaction_rating,
+            date: visit.date,
+            notes: visit.notes,
+          };
+        })
+    );
+
+    return {
+      averageRating: Math.round(averageRating * 10) / 10, // Uma casa decimal
+      totalResponses: visitsWithRating.length,
+      distribution,
+      recentFeedback,
+    };
+  }
+
+  // Clientes sem contato recente
+  async getClientsWithoutRecentContact(days: number = 30) {
+    const allClients = await this.getClients();
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
+    const results = [];
+
+    for (const client of allClients) {
+      // Ignorar clientes inativos ou pendentes
+      if (client.status === 'inactive' || client.status === 'pending') continue;
+
+      // Buscar última atividade
+      const clientActivities = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.clientId, client.id))
+        .orderBy(desc(activities.createdAt))
+        .limit(1);
+
+      // Buscar último agendamento
+      const clientAppointments = await db
+        .select()
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.clientId, client.id),
+            eq(appointments.status, 'completed')
+          )
+        )
+        .orderBy(desc(appointments.scheduledStart))
+        .limit(1);
+
+      // Buscar última visita
+      const clientVisits = await db
+        .select()
+        .from(visits)
+        .where(
+          and(
+            eq(visits.clientId, client.id),
+            eq(visits.status, 'completed')
+          )
+        )
+        .orderBy(desc(visits.date))
+        .limit(1);
+
+      // Determinar último contato
+      const dates = [
+        clientActivities[0]?.createdAt,
+        clientAppointments[0]?.scheduledStart,
+        clientVisits[0]?.date,
+      ].filter(Boolean) as Date[];
+
+      const lastContact = dates.length > 0
+        ? new Date(Math.max(...dates.map(d => new Date(d).getTime())))
+        : null;
+
+      // Se não há contato ou é anterior à data de corte
+      if (!lastContact || lastContact < cutoffDate) {
+        const daysSinceContact = lastContact
+          ? Math.floor((Date.now() - lastContact.getTime()) / (1000 * 60 * 60 * 24))
+          : null;
+
+        results.push({
+          id: client.id,
+          companyName: client.companyName,
+          contactName: client.contactName,
+          contactEmail: client.contactEmail,
+          status: client.status,
+          lastContact: lastContact?.toISOString() || null,
+          daysSinceContact,
+        });
+      }
+    }
+
+    // Ordenar por dias sem contato (mais antigo primeiro)
+    results.sort((a, b) => {
+      if (a.daysSinceContact === null) return -1;
+      if (b.daysSinceContact === null) return 1;
+      return b.daysSinceContact - a.daysSinceContact;
+    });
+
+    return {
+      clients: results,
+      total: results.length,
+      daysThreshold: days,
+    };
   }
 }
 
 // Initialize default user on app start
 async function initializeDefaultUser() {
   try {
-    const existingUser = await db.select().from(users).where(eq(users.username, "admin")).limit(1);
-    
+    const rootEmail = process.env.ROOT_EMAIL || "desenvolvimento@sabercontabil.com.br";
+    const existingUser = await db.select().from(users).where(eq(users.email, rootEmail)).limit(1);
+
     if (existingUser.length === 0) {
+      // Importar bcrypt para hash de senha
+      const bcrypt = await import('bcrypt');
+      const senhaHash = await bcrypt.hash(process.env.ROOT_SENHA || "Saberdev@2025", 10);
+
       await db.insert(users).values({
-        username: "admin",
-        password: "admin123",
-        name: "João Silva",
-        email: "joao@saber.com.br",
-        role: "contador",
+        id: process.env.ROOT_ID || undefined,
+        nome: process.env.ROOT_NAME || "Root",
+        email: rootEmail,
+        senhaHash: senhaHash,
+        funcao: (process.env.ROOT_FUNCAO as any) || "admin",
+        nivelPermissao: "administrador",
+        fotoUrl: process.env.ROOT_FOTO || null,
+        ativo: true,
+        bloqueado: false,
       });
-      console.log("✅ Default user created");
+      console.log("✅ Default root user created");
     }
   } catch (error) {
     console.log("❌ Error creating default user:", error);

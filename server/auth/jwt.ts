@@ -6,7 +6,7 @@ if (!process.env.JWT_SECRET) {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const ACCESS_TOKEN_EXPIRY = '15m'; // 15 minutos
+const ACCESS_TOKEN_EXPIRY = '23h'; // 23 horas
 const REFRESH_TOKEN_EXPIRY = '7d'; // 7 dias
 
 export interface TokenPayload {

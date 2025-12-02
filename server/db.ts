@@ -20,9 +20,13 @@ export const pool = new Pool({
 // Initialize Drizzle ORM with PostgreSQL
 export const db = drizzle(pool, { schema });
 
-// Test database connection
+// Test database connection (log only once to avoid spam)
+let connectionLogged = false;
 pool.on('connect', () => {
-  console.log('✅ Connected to PostgreSQL database');
+  if (!connectionLogged) {
+    console.log('✅ Connected to PostgreSQL database');
+    connectionLogged = true;
+  }
 });
 
 pool.on('error', (err) => {

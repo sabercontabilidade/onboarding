@@ -1,83 +1,44 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useLocation } from 'wouter'
-import { 
-  UserPlus, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle,
+import { useLocation } from 'wouter'
+import {
+  UserPlus,
+  Clock,
+  CheckCircle2,
   Users,
-  Building,
-  Calendar,
-  FileText,
-  Eye
+  RefreshCcw
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { ViewToggle, type ViewType } from '@/components/ui/view-toggle'
 import { ClientCard } from '@/components/client-card'
 import { KanbanView } from '@/components/kanban-view'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { api } from '@/lib/api'
-import dayjs from '@/lib/dayjs'
 
 export function OnboardingPage() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [currentView, setCurrentView] = useState<ViewType>('list')
   const [, setLocation] = useLocation()
-  
+
   const { data: clients, isLoading } = useQuery({
     queryKey: ['/api/clients', refreshKey],
     queryFn: () => api.clients.list(),
   })
 
   const onboardingClients = clients?.filter(client => client.status === 'onboarding') || []
-  
-  // Detectar mudanças no localStorage para atualizar progresso
-  useEffect(() => {
-    const handleStorageChange = () => {
-      setRefreshKey(prev => prev + 1)
-    }
-    
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Também escutar mudanças personalizadas no localStorage
-    window.addEventListener('localStorageChange', handleStorageChange)
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('localStorageChange', handleStorageChange)
-    }
-  }, [])
 
-  const getFollowUpProgress = (client: any) => {
-    // Buscar etapas concluídas do localStorage
-    const followUpStages = ['plano_sucesso', 'inicial', 'd5', 'd15', 'd50', 'd80', 'd100', 'd180']
-    const completedStagesKey = `completedStages_${client.id}`
-    const completedStagesStr = localStorage.getItem(completedStagesKey) || '[]'
-    const completedStages = JSON.parse(completedStagesStr)
-    const completedStagesCount = completedStages.length
-    
-    return (completedStagesCount / followUpStages.length) * 100
-  }
-
-  const getOnboardingInProgress = () => {
-    return onboardingClients.filter(client => getFollowUpProgress(client) < 100).length
-  }
-
-  const getOnboardingCompleted = () => {
-    return onboardingClients.filter(client => getFollowUpProgress(client) === 100).length
-  }
-
-  // Estas funções foram movidas para o ClientCard component
+  // Buscar estatísticas de onboarding da API
+  const { data: onboardingStats } = useQuery({
+    queryKey: ['/api/onboarding/stats'],
+    queryFn: () => api.onboarding.stats(),
+  })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Onboarding de Clientes</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Onboarding de Clientes</h1>
+          <p className="text-muted-foreground mt-1">
             Acompanhe o progresso de onboarding dos novos clientes
           </p>
         </div>
@@ -86,7 +47,11 @@ export function OnboardingPage() {
             currentView={currentView}
             onViewChange={setCurrentView}
           />
-          <Button variant="outline" onClick={() => setLocation('/clientes')}>
+          <Button
+            variant="outline"
+            onClick={() => setLocation('/clientes')}
+            className="hover:bg-orange-50 hover:text-[#EA610B] hover:border-[#EA610B]"
+          >
             <Users className="mr-2 h-4 w-4" />
             Ver Todos os Clientes
           </Button>
@@ -95,85 +60,71 @@ export function OnboardingPage() {
 
       {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Total em Onboarding</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">{onboardingClients.length}</span>
-                </div>
-              </div>
+        <div className="saber-card p-6 animate-scale-in">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total em Onboarding</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{onboardingClients.length}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-12 h-12 bg-[#EA610B] rounded-xl flex items-center justify-center shadow-sm">
+              <UserPlus className="h-6 w-6 text-white" />
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Onboarding em Andamento</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">
-                    {getOnboardingInProgress()}
-                  </span>
-                </div>
-              </div>
+        <div className="saber-card p-6 animate-scale-in" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Em Andamento</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{onboardingStats?.inProgress || 0}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-sm">
+              <Clock className="h-6 w-6 text-white" />
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Onboarding Finalizados</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">
-                    {getOnboardingCompleted()}
-                  </span>
-                </div>
-              </div>
+        <div className="saber-card p-6 animate-scale-in" style={{ animationDelay: '0.2s' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Finalizados</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{onboardingStats?.completed || 0}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-12 h-12 bg-saber-success rounded-xl flex items-center justify-center shadow-sm">
+              <CheckCircle2 className="h-6 w-6 text-white" />
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Revisão</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">
-                    {onboardingClients.filter(c => c.currentStage?.stage === 'review').length}
-                  </span>
-                </div>
-              </div>
+        <div className="saber-card p-6 animate-scale-in" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Em Revisão</p>
+              <p className="text-2xl font-bold text-foreground mt-1">
+                {onboardingClients.filter(c => c.currentStage?.stage === 'review').length}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-12 h-12 bg-yellow-500 rounded-xl flex items-center justify-center shadow-sm">
+              <RefreshCcw className="h-6 w-6 text-white" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Lista de Clientes em Onboarding */}
       {isLoading ? (
         <div className={currentView === 'kanban' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' : 'grid gap-4'}>
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2 flex-1">
-                    <div className="h-5 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                  <div className="h-6 bg-gray-200 rounded w-20"></div>
+            <div key={i} className="saber-card p-6 animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2 flex-1">
+                  <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-2 bg-gray-200 rounded w-3/4"></div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="h-6 bg-gray-200 rounded w-20"></div>
+              </div>
+            </div>
           ))}
         </div>
       ) : onboardingClients.length > 0 ? (
@@ -196,14 +147,19 @@ export function OnboardingPage() {
           )}
         </div>
       ) : (
-        <Card>
+        <Card className="saber-card">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <UserPlus className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Nenhum cliente em onboarding</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <UserPlus className="h-8 w-8 text-[#EA610B]" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum cliente em onboarding</h3>
+            <p className="text-muted-foreground text-center mb-6 max-w-md">
               Todos os clientes já concluíram o processo de onboarding ou ainda não há clientes cadastrados.
             </p>
-            <Button variant="outline" onClick={() => setLocation('/clientes')}>
+            <Button
+              onClick={() => setLocation('/clientes')}
+              className="bg-[#EA610B] hover:bg-orange-600 text-white shadow-sm"
+            >
               <Users className="mr-2 h-4 w-4" />
               Ver Todos os Clientes
             </Button>

@@ -16,6 +16,9 @@ export const redis = new Redis(process.env.CACHE_URL, {
   lazyConnect: true,
 });
 
+// Alias for compatibility
+export const redisClient = redis;
+
 // Test Redis connection
 redis.on('connect', () => {
   console.log('✅ Connected to Redis cache');
@@ -174,7 +177,10 @@ export const CACHE_KEYS = {
   CLIENT: (id: string) => `client:${id}`,
   CLIENTS_LIST: 'clients:list',
   DASHBOARD_METRICS: 'dashboard:metrics',
+  DASHBOARD_COUNTS: 'dashboard:counts',
   ONBOARDING_STAGES: (clientId: string) => `onboarding:${clientId}`,
+  ONBOARDING_PROGRESS: (clientId: string) => `onboarding:progress:${clientId}`,
+  ONBOARDING_STATS: 'onboarding:stats',
   APPOINTMENTS: (clientId?: string) => clientId ? `appointments:client:${clientId}` : 'appointments:all',
   VISITS: (clientId?: string) => clientId ? `visits:client:${clientId}` : 'visits:all',
   ACTIVITIES: (clientId?: string) => clientId ? `activities:client:${clientId}` : 'activities:recent',

@@ -64,32 +64,32 @@ export function VisitasPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Visitas Técnicas</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Visitas Técnicas</h1>
+        <p className="text-muted-foreground mt-1">
           Acompanhe as ATAs e resultados das visitas realizadas
         </p>
       </div>
 
       {/* Filtros e Busca */}
-      <Card>
+      <Card className="saber-card">
         <CardContent className="pt-6">
           <div className="flex gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 placeholder="Buscar por cliente ou tipo de visita..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-gray-200 focus:border-[#EA610B] focus:ring-[#EA610B]"
               />
             </div>
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48 border-gray-200">
                 <SelectValue placeholder="Tipo de visita" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-xl">
                 <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="Implementação">Implementação</SelectItem>
                 <SelectItem value="Follow-up">Follow-up</SelectItem>
@@ -107,56 +107,50 @@ export function VisitasPage() {
 
       {/* Estatísticas dos Clientes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <Building className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">Total de Clientes</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">{allClients.length}</span>
-                </div>
-              </div>
+        <div className="saber-card p-6 animate-scale-in">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total de Clientes</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{allClients.length}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-12 h-12 bg-[#EA610B] rounded-xl flex items-center justify-center shadow-sm">
+              <Building className="h-6 w-6 text-white" />
+            </div>
+          </div>
+        </div>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              <div className="ml-2">
-                <p className="text-sm font-medium text-muted-foreground">ATAs Realizadas</p>
-                <div className="flex items-center">
-                  <span className="text-2xl font-bold">{allVisits?.length || 0}</span>
-                </div>
-              </div>
+        <div className="saber-card p-6 animate-scale-in" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">ATAs Realizadas</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{allVisits?.length || 0}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="w-12 h-12 bg-saber-success rounded-xl flex items-center justify-center shadow-sm">
+              <FileText className="h-6 w-6 text-white" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Lista de Clientes */}
       {isLoadingClients ? (
         <div className={currentView === 'kanban' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' : 'grid gap-4'}>
           {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2 flex-1">
-                    <div className="h-5 bg-gray-200 rounded w-1/3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                  <div className="h-6 bg-gray-200 rounded w-20"></div>
+            <div key={i} className="saber-card p-6 animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2 flex-1">
+                  <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                  <div className="h-2 bg-gray-200 rounded w-3/4"></div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="h-6 bg-gray-200 rounded w-20"></div>
+              </div>
+            </div>
           ))}
         </div>
       ) : allClients.length > 0 ? (
         <div data-testid="visitas-clients-content">
-          <h2 className="text-xl font-semibold mb-4">Clientes</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">Clientes</h2>
           {currentView === 'list' ? (
             <div className="space-y-4" data-testid="list-view">
               {allClients.map((client: any) => (
@@ -173,15 +167,17 @@ export function VisitasPage() {
           )}
         </div>
       ) : (
-        <Card>
+        <Card className="saber-card">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Nenhum cliente cadastrado</h3>
-            <p className="text-muted-foreground text-center mb-4">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <Building className="h-8 w-8 text-[#EA610B]" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum cliente cadastrado</h3>
+            <p className="text-muted-foreground text-center mb-6 max-w-md">
               Comece cadastrando seus clientes para acompanhar as visitas técnicas.
             </p>
             <Link href="/clientes/novo">
-              <Button>
+              <Button className="bg-[#EA610B] hover:bg-orange-600 text-white shadow-sm">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Cadastrar Novo Cliente
               </Button>

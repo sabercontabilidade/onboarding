@@ -128,6 +128,11 @@ export const AuditActions = {
   // Notificações
   NOTIFICATION_SEND: 'notification_send',
   NOTIFICATION_READ: 'notification_read',
+
+  // Arquivos
+  FILE_UPLOAD: 'file_upload',
+  FILE_DELETE: 'file_delete',
+  FILE_DOWNLOAD: 'file_download',
 } as const;
 
 /**
@@ -181,3 +186,8 @@ export function calculateDiff(
 
   return changes;
 }
+
+/**
+ * Alias simplificado para createAuditLog
+ */
+export const logAudit = createAuditLog;

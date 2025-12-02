@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyToken, extractTokenFromHeader, type TokenPayload } from './jwt.js';
 import { db } from '../db.js';
-import { users } from '@shared/schema';
+import { users, type User } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { getCache, setCache, CACHE_TTL, CACHE_KEYS } from '../cache.js';
 
@@ -32,9 +32,9 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     const payload = verifyToken(token);
 
     // Verificar se usuário existe e está ativo (com cache)
-    const cachedUser = await getCache(CACHE_KEYS.USER(payload.userId));
+    const cachedUser = await getCache<User>(CACHE_KEYS.USER(payload.userId));
 
-    let user = cachedUser;
+    let user: User | null = cachedUser;
     if (!user) {
       const [dbUser] = await db
         .select()

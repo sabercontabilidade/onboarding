@@ -4,6 +4,7 @@ import { notifications, users } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { authenticate } from '../auth/middleware.js';
 import { auditFromRequest } from '../audit/logger.js';
+import { sendNotificationToUser, getConnectionStats, isUserOnline } from '../services/websocket/socket-server.js';
 
 export function registerNotificationRoutes(app: Express) {
   /**
@@ -304,13 +305,53 @@ export function registerNotificationRoutes(app: Express) {
         dadosNovos: { titulo, mensagem },
       });
 
+      // Enviar via WebSocket se o usuário estiver online
+      const [sender] = await db
+        .select({ id: users.id, nome: users.nome, fotoUrl: users.fotoUrl })
+        .from(users)
+        .where(eq(users.id, req.user!.userId))
+        .limit(1);
+
+      sendNotificationToUser(usuarioId, {
+        id: notification.id,
+        tipo: notification.tipo,
+        titulo: notification.titulo,
+        mensagem: notification.mensagem,
+        entidade: notification.entidade || undefined,
+        entidadeId: notification.entidadeId || undefined,
+        remetente: sender ? {
+          id: sender.id,
+          nome: sender.nome,
+          fotoUrl: sender.fotoUrl || undefined,
+        } : undefined,
+      });
+
       res.status(201).json({
         success: true,
         notification,
+        userOnline: isUserOnline(usuarioId),
       });
     } catch (error) {
       console.error('Erro ao enviar notificação:', error);
       res.status(500).json({ error: 'Erro ao enviar notificação' });
+    }
+  });
+
+  /**
+   * GET /api/notifications/websocket-stats
+   * Estatísticas de conexões WebSocket (apenas admin)
+   */
+  app.get('/api/notifications/websocket-stats', authenticate, async (req, res) => {
+    try {
+      if (req.user!.nivelPermissao !== 'administrador') {
+        return res.status(403).json({ error: 'Apenas administradores podem ver estatísticas' });
+      }
+
+      const stats = getConnectionStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Erro ao obter estatísticas:', error);
+      res.status(500).json({ error: 'Erro ao obter estatísticas' });
     }
   });
 }

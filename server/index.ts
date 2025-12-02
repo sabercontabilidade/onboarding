@@ -3,6 +3,8 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 import { auditMiddleware } from "./audit/middleware.js";
 import './cache.js'; // Inicializar Redis
+import { initScheduler, shutdownScheduler } from './services/scheduler/scheduler.js';
+import { initializeWebSocket } from './services/websocket/socket-server.js';
 
 const app = express();
 app.use(express.json());
@@ -44,6 +46,30 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
+  // Validar conexão com banco de dados na inicialização
+  try {
+    const { db } = await import('./db.js');
+    const { users } = await import('../shared/schema.js');
+    await db.select().from(users).limit(1);
+    log('✅ Banco de dados (PostgreSQL) conectado');
+  } catch (error: any) {
+    log('❌ ERRO: Falha ao conectar com banco de dados');
+    log(`   ${error.message || error}`);
+    log('   Verifique a variável DATABASE_URL no arquivo .env');
+    process.exit(1); // Impede inicialização sem banco
+  }
+
+  // Validar conexão com Redis (cache)
+  try {
+    const { redisClient } = await import('./cache.js');
+    await redisClient.ping();
+    log('✅ Redis (cache) conectado');
+  } catch (error: any) {
+    log('⚠️  Redis não disponível (cache desabilitado)');
+    log(`   ${error.message || error}`);
+    log('   A aplicação continuará sem cache');
+  }
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -52,25 +78,60 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
+  // Verificação consistente de ambiente com fallback para development
+  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+
+  if (isDevelopment) {
+    log('🔧 Modo DESENVOLVIMENTO');
+    log('   Frontend: Vite HMR (compilação em tempo real)');
+    log('   Backend: PostgreSQL + Redis (ambiente LOCAL)');
     await setupVite(app, server);
   } else {
+    log('📦 Modo PRODUÇÃO');
+    log('   Frontend: Arquivos pré-compilados (dist/public/)');
+    log('   Backend: PostgreSQL + Redis (ambiente PRODUÇÃO)');
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  server.listen(port, "0.0.0.0", () => {
+    log(`🚀 Servidor rodando na porta ${port}`);
+    log(`📍 Ambiente: ${isDevelopment ? 'DESENVOLVIMENTO' : 'PRODUÇÃO'}`);
+    log(`🔗 Acesse: http://localhost:${port}`);
+
+    // Iniciar WebSocket
+    try {
+      initializeWebSocket(server);
+      log('🔌 WebSocket inicializado');
+    } catch (error: any) {
+      log(`⚠️  Erro ao iniciar WebSocket: ${error.message}`);
+    }
+
+    // Iniciar scheduler de jobs
+    try {
+      initScheduler();
+      log('⏰ Job scheduler inicializado');
+    } catch (error: any) {
+      log(`⚠️  Erro ao iniciar scheduler: ${error.message}`);
+    }
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    log('🔄 Recebido SIGTERM, encerrando gracefully...');
+    await shutdownScheduler();
+    server.close(() => {
+      log('✅ Servidor encerrado');
+      process.exit(0);
+    });
+  });
+
+  process.on('SIGINT', async () => {
+    log('🔄 Recebido SIGINT, encerrando gracefully...');
+    await shutdownScheduler();
+    server.close(() => {
+      log('✅ Servidor encerrado');
+      process.exit(0);
+    });
   });
 })();

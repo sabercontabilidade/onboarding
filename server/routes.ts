@@ -6,6 +6,14 @@ import { registerAuthRoutes } from "./routes/auth.js";
 import { registerAssignmentRoutes } from "./routes/assignments.js";
 import { registerCommentRoutes } from "./routes/comments.js";
 import { registerNotificationRoutes } from "./routes/notifications.js";
+import { registerUserRoutes } from "./routes/users.js";
+import { registerAuditRoutes } from "./routes/audit.js";
+import { registerFileRoutes } from "./routes/files.js";
+import { registerExportRoutes } from "./routes/export.js";
+import { registerTwoFactorRoutes } from "./routes/two-factor.js";
+import integrationsRouter from "./routes/integrations.js";
+import setoresRouter from "./routes/setores.js";
+import perfisRouter from "./routes/perfis.js";
 import { authenticate, requireAdmin, requirePermissao } from "./auth/middleware.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -30,10 +38,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerNotificationRoutes(app);
 
   // ========================================
-  // ROTAS EXISTENTES (A SEREM PROTEGIDAS)
+  // ROTAS DE USUÁRIOS (PROTEGIDAS)
+  // ========================================
+  registerUserRoutes(app);
+
+  // ========================================
+  // ROTAS DE AUDITORIA (PROTEGIDAS)
+  // ========================================
+  registerAuditRoutes(app);
+
+  // ========================================
+  // ROTAS DE ARQUIVOS (PROTEGIDAS)
+  // ========================================
+  registerFileRoutes(app);
+
+  // ========================================
+  // ROTAS DE EXPORTAÇÃO (CSV/PDF)
+  // ========================================
+  registerExportRoutes(app);
+
+  // ========================================
+  // ROTAS DE 2FA/TOTP
+  // ========================================
+  registerTwoFactorRoutes(app);
+
+  // ========================================
+  // ROTAS DE INTEGRAÇÕES (Google OAuth2, Calendar)
+  // ========================================
+  app.use('/api/integrations', integrationsRouter);
+
+  // ========================================
+  // ROTAS DE SETORES E PERFIS (PROTEGIDAS)
+  // ========================================
+  app.use('/api/setores', setoresRouter);
+  app.use('/api/perfis', perfisRouter);
+
+  // ========================================
+  // ROTAS EXISTENTES (PROTEGIDAS)
   // ========================================
   // Dashboard routes
-  app.get("/api/dashboard/metrics", async (req, res) => {
+  app.get("/api/dashboard/metrics", authenticate, async (req, res) => {
     try {
       const metrics = await storage.getDashboardMetrics();
       res.json(metrics);
@@ -42,8 +86,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard counts (para sidebar e estatísticas gerais)
+  app.get("/api/dashboard/counts", authenticate, async (req, res) => {
+    try {
+      const counts = await storage.getDashboardCounts();
+      res.json(counts);
+    } catch (error) {
+      console.error("Error fetching dashboard counts:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard counts" });
+    }
+  });
+
+  // Dashboard - Estatísticas de Satisfação
+  app.get("/api/dashboard/satisfaction", authenticate, async (req, res) => {
+    try {
+      const satisfactionStats = await storage.getSatisfactionStats();
+      res.json(satisfactionStats);
+    } catch (error) {
+      console.error("Error fetching satisfaction stats:", error);
+      res.status(500).json({ error: "Failed to fetch satisfaction statistics" });
+    }
+  });
+
+  // Dashboard - Clientes sem Contato Recente
+  app.get("/api/dashboard/clients-without-contact", authenticate, async (req, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const clientsWithoutContact = await storage.getClientsWithoutRecentContact(days);
+      res.json(clientsWithoutContact);
+    } catch (error) {
+      console.error("Error fetching clients without contact:", error);
+      res.status(500).json({ error: "Failed to fetch clients without recent contact" });
+    }
+  });
+
   // Client routes
-  app.get("/api/clients", async (req, res) => {
+  app.get("/api/clients", authenticate, async (req, res) => {
     try {
       const search = req.query.search as string;
       const clients = await storage.getClientsWithDetails(search);
@@ -53,7 +131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clients/:id", async (req, res) => {
+  app.get("/api/clients/:id", authenticate, async (req, res) => {
     try {
       const client = await storage.getClientWithDetails(req.params.id);
       if (!client) {
@@ -65,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/clients", async (req, res) => {
+  app.post("/api/clients", authenticate, async (req, res) => {
     try {
       const clientData = insertClientSchema.parse(req.body);
       
@@ -113,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/clients/:id", async (req, res) => {
+  app.put("/api/clients/:id", authenticate, async (req, res) => {
     try {
       const updates = insertClientSchema.partial().parse(req.body);
       const client = await storage.updateClient(req.params.id, updates);
@@ -123,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/clients/:id", async (req, res) => {
+  app.delete("/api/clients/:id", authenticate, async (req, res) => {
     try {
       await storage.deleteClient(req.params.id);
       res.status(204).send();
@@ -132,7 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/clients/:id/start-onboarding", async (req, res) => {
+  app.post("/api/clients/:id/start-onboarding", authenticate, async (req, res) => {
     try {
       const clientId = req.params.id;
       const { assigneeId } = req.body;
@@ -156,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Appointment routes
-  app.get("/api/appointments", async (req, res) => {
+  app.get("/api/appointments", authenticate, async (req, res) => {
     try {
       const appointments = await storage.getAppointmentsWithDetails();
       res.json(appointments);
@@ -165,7 +243,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/appointments/upcoming", async (req, res) => {
+  app.get("/api/appointments/upcoming", authenticate, async (req, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const appointments = await storage.getUpcomingAppointments(limit);
@@ -175,7 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/appointments", async (req, res) => {
+  app.post("/api/appointments", authenticate, async (req, res) => {
     try {
       // Convert date strings to Date objects if necessary
       if (req.body.scheduledStart && typeof req.body.scheduledStart === 'string') {
@@ -193,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/appointments/:id", async (req, res) => {
+  app.put("/api/appointments/:id", authenticate, async (req, res) => {
     try {
       const updates = insertAppointmentSchema.partial().parse(req.body);
       const appointment = await storage.updateAppointment(req.params.id, updates);
@@ -203,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/appointments/:id", async (req, res) => {
+  app.delete("/api/appointments/:id", authenticate, async (req, res) => {
     try {
       await storage.deleteAppointment(req.params.id);
       res.status(204).send();
@@ -213,62 +291,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Google Calendar availability route
-  app.get("/api/v1/agendamentos/disponibilidade/:userId", async (req, res) => {
+  app.get("/api/v1/agendamentos/disponibilidade/:userId", authenticate, async (req, res) => {
     try {
       const userId = req.params.userId;
       const daysAhead = parseInt(req.query.days_ahead as string) || 7;
-      
-      // For now, return mock available slots since Google Calendar integration would need proper OAuth setup
-      // In a real implementation, this would call the Google Calendar API
-      const mockSlots = [
-        {
-          start: new Date(Date.now() + 86400000).toISOString(), // Tomorrow 9am
-          end: new Date(Date.now() + 86400000 + 3600000).toISOString(),
-          date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-          time: "09:00",
-          display: new Date(Date.now() + 86400000).toLocaleDateString('pt-BR') + " às 09:00"
-        },
-        {
-          start: new Date(Date.now() + 86400000 + 7200000).toISOString(), // Tomorrow 11am
-          end: new Date(Date.now() + 86400000 + 10800000).toISOString(),
-          date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-          time: "11:00",
-          display: new Date(Date.now() + 86400000).toLocaleDateString('pt-BR') + " às 11:00"
-        },
-        {
-          start: new Date(Date.now() + 172800000).toISOString(), // Day after tomorrow 10am
-          end: new Date(Date.now() + 172800000 + 3600000).toISOString(),
-          date: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-          time: "10:00",
-          display: new Date(Date.now() + 172800000).toLocaleDateString('pt-BR') + " às 10:00"
-        }
-      ];
-      
-      res.json({
-        user_id: userId,
-        period: {
-          start: new Date().toISOString(),
-          end: new Date(Date.now() + (daysAhead * 86400000)).toISOString()
-        },
-        business_hours: {
-          start: "08:00",
-          end: "18:00"
-        },
-        slot_duration_minutes: 60,
-        available_slots: mockSlots,
-        total_slots: mockSlots.length
+
+      // TODO: Implementar integração real com Google Calendar API
+      // Por enquanto retorna erro indicando que a integração não está configurada
+      res.status(501).json({
+        error: "Integração com Google Calendar não implementada",
+        message: "Para usar esta funcionalidade, configure as credenciais OAuth2 do Google Calendar e implemente a autenticação do usuário.",
+        userId: userId,
+        daysAhead: daysAhead
       });
     } catch (error) {
       console.error("Error fetching calendar availability:", error);
-      res.status(500).json({ 
-        error: "Usuário não possui credenciais do Google Calendar válidas. Configure a integração com o Google primeiro.",
-        details: "Para implementar a integração completa com Google Calendar, configure as credenciais OAuth2 e implemente a autenticação do usuário."
+      res.status(500).json({
+        error: "Erro ao buscar disponibilidade do calendário"
       });
     }
   });
 
   // Onboarding routes
-  app.get("/api/clients/:id/onboarding", async (req, res) => {
+  app.get("/api/clients/:id/onboarding", authenticate, async (req, res) => {
     try {
       const stages = await storage.getOnboardingStages(req.params.id);
       res.json(stages);
@@ -277,7 +322,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/onboarding/:id", async (req, res) => {
+  // Progresso de onboarding de um cliente específico
+  app.get("/api/clients/:id/onboarding-progress", authenticate, async (req, res) => {
+    try {
+      const progress = await storage.getOnboardingProgress(req.params.id);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching onboarding progress:", error);
+      res.status(500).json({ error: "Failed to fetch onboarding progress" });
+    }
+  });
+
+  // Estatísticas gerais de onboarding
+  app.get("/api/onboarding/stats", authenticate, async (req, res) => {
+    try {
+      const stats = await storage.getOnboardingStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching onboarding stats:", error);
+      res.status(500).json({ error: "Failed to fetch onboarding stats" });
+    }
+  });
+
+  app.put("/api/onboarding/:id", authenticate, async (req, res) => {
     try {
       const updates = req.body;
       const stage = await storage.updateOnboardingStage(req.params.id, updates);
@@ -288,7 +355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Activity routes
-  app.get("/api/activities", async (req, res) => {
+  app.get("/api/activities", authenticate, async (req, res) => {
     try {
       const clientId = req.query.clientId as string;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -306,7 +373,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Integration routes
-  app.get("/api/integrations", async (req, res) => {
+  app.get("/api/integrations", authenticate, async (req, res) => {
     try {
       const integrations = await storage.getIntegrations();
       res.json(integrations);
@@ -316,7 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Visit routes
-  app.get("/api/visits", async (req, res) => {
+  app.get("/api/visits", authenticate, async (req, res) => {
     try {
       const visits = await storage.getVisits();
       res.json(visits);
@@ -325,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clients/:id/visits", async (req, res) => {
+  app.get("/api/clients/:id/visits", authenticate, async (req, res) => {
     try {
       const visits = await storage.getVisits(req.params.id);
       res.json(visits);
@@ -334,16 +401,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/clients/:id/appointments", async (req, res) => {
+  app.get("/api/clients/:id/appointments", authenticate, async (req, res) => {
     try {
-      const appointments = await storage.getAppointments(req.params.id);
+      const appointments = await storage.getAppointmentsByClient(req.params.id);
       res.json(appointments);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch client appointments" });
     }
   });
 
-  app.post("/api/visits", async (req, res) => {
+  app.post("/api/visits", authenticate, async (req, res) => {
     try {
       // Convert date string to Date object if necessary
       if (req.body.date && typeof req.body.date === 'string') {
@@ -360,7 +427,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/visits/:id", async (req, res) => {
+  app.put("/api/visits/:id", authenticate, async (req, res) => {
     try {
       const updates = insertVisitSchema.partial().parse(req.body);
       const visit = await storage.updateVisit(req.params.id, updates);
@@ -370,7 +437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/visits/:id", async (req, res) => {
+  app.delete("/api/visits/:id", authenticate, async (req, res) => {
     try {
       await storage.deleteVisit(req.params.id);
       res.status(204).send();
@@ -380,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard relacionamento routes
-  app.get("/api/relacionamento/metricas", async (req, res) => {
+  app.get("/api/relacionamento/metricas", authenticate, async (req, res) => {
     try {
       const clients = await storage.getClients();
       const appointments = await storage.getAppointments();
@@ -425,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/relacionamento/proximos-contatos", async (req, res) => {
+  app.get("/api/relacionamento/proximos-contatos", authenticate, async (req, res) => {
     try {
       const appointments = await storage.getAppointments();
       const clients = await storage.getClients();
@@ -453,7 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/relacionamento/agendamentos-atrasados", async (req, res) => {
+  app.get("/api/relacionamento/agendamentos-atrasados", authenticate, async (req, res) => {
     try {
       const appointments = await storage.getAppointments();
       const clients = await storage.getClients();
@@ -481,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/relacionamento/visitas-recentes", async (req, res) => {
+  app.get("/api/relacionamento/visitas-recentes", authenticate, async (req, res) => {
     try {
       const visits = await storage.getVisits();
       const clients = await storage.getClients();
@@ -510,7 +577,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CNPJ lookup route
-  app.get("/api/cnpj/:cnpj", async (req, res) => {
+  app.get("/api/cnpj/:cnpj", authenticate, async (req, res) => {
     try {
       const cnpj = req.params.cnpj.replace(/\D/g, ''); // Remove non-digits
       

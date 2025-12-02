@@ -8,6 +8,27 @@
       "when": 1760526087390,
       "tag": "0000_minor_iron_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1764548963367,
+      "tag": "0001_keen_shiver_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764616896301,
+      "tag": "0002_soft_havok",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764618270590,
+      "tag": "0003_shocking_tiger_shark",
+      "breakpoints": true
     }
   ]
 }

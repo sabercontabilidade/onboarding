@@ -1,1 +1,0 @@
-# Jobs automáticos da aplicação
